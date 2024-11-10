@@ -4,9 +4,9 @@
     <test name="Android">
         <parameter name="platformName" value="Android"/>
         <parameter name="noReset" value="true"/>
-        <parameter name="platformVersion" value="12"/>
-        <parameter name="udid" value="LDKJ897FD"/>
-        <parameter name="deviceName" value="Galaxy Note 10"/>
+        <parameter name="appPackage" value="io.appium.android.apis"/>
+        <parameter name="appActivity" value="io.appium.android.apis.ApiDemos"/>
+
 
         <classes>
             <class name="org.apidemos.FirstTest">
