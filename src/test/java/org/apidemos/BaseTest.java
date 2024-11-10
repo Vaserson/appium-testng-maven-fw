@@ -6,23 +6,32 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.time.Duration;
+import java.util.Properties;
 
 public class BaseTest {
     protected AndroidDriver driver;
     protected WebDriverWait wait;
+    protected Properties properties;
+    InputStream inputStream;
 
     @BeforeMethod
     public void setUp() {
         try {
-            URL url = new URI("http://127.0.0.1:4723").toURL();
+            properties = new Properties();
+            String propertiesFileName = "apiDemos.properties";
+            inputStream = getClass().getClassLoader().getResourceAsStream(propertiesFileName);
+            properties.load(inputStream);
+
+            URL url = new URI(properties.getProperty("appiumURL")).toURL();
 
             UiAutomator2Options options = new UiAutomator2Options()
                     .setPlatformName("Android")
-                    .setAppPackage("io.appium.android.apis")
-                    .setAppActivity("io.appium.android.apis.ApiDemos")
+                    .setAppPackage(properties.getProperty("androidAppPackage"))
+                    .setAppActivity(properties.getProperty("androidAppActivity"))
                     .noReset();
 
             driver = new AndroidDriver(url, options);
