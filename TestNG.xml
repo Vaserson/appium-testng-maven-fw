@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<suite name="Suite">
+
+    <test name="Android">
+        <parameter name="platformName" value="Android"/>
+        <parameter name="noReset" value="true"/>
+        <parameter name="platformVersion" value="12"/>
+        <parameter name="udid" value="LDKJ897FD"/>
+        <parameter name="deviceName" value="Galaxy Note 10"/>
+
+        <classes>
+            <class name="org.apidemos.FirstTest">
+                <methods>
+                    <method method-name="firstTest"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+</suite>
