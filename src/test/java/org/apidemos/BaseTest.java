@@ -2,6 +2,8 @@ package org.apidemos;
 
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -17,6 +19,8 @@ public class BaseTest {
     protected WebDriverWait wait;
     protected Properties properties;
     InputStream inputStream;
+
+    private static final Logger LOGGER = LogManager.getLogger(BaseTest.class);
 
     @BeforeMethod
     public void setUp() {
