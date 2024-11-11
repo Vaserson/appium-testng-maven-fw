@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <!-- Titles -->
+    <string name="overview_title">Ignite Gateway Online</string>
+    <string name="home_title">Home</string>
+
+    <!-- Error Text -->
+    <string name="err_invalid_username_or_password">Sorry, the username and/or password entered is not recognized. Please try again. </string>
+
+    <!-- Camera Settings Notifications -->
+    <string name="camera_settings_notifications_people_only">People Only</string>
+    <string name="camera_settings_notifications_all_events">All Events</string>
+    <string name="camera_settings_notifications_notifications_off">Off</string>
+
+    <!-- Camera names -->
+    <string name="camera_xcam2_old_name">Entryway</string>
+    <string name="camera_xcam2_new_name">NewEntrywayName</string>
+    <string name="camera_doorbell_old_name">welcome home</string>
+    <string name="camera_doorbell_new_name">NewWelcomeHomeName</string>
+
+
+    <string name="version">VERSION 5.4.0.20230727181306</string>
+
+</resources>
