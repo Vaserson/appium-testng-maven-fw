@@ -30,6 +30,7 @@ public class BaseTest {
     @Parameters({"platformName"})
     @BeforeTest
     public void beforeTest(@Optional("ANDROID") String platformName) throws IOException {
+        //TODO Make automatic appiumService start and stop parametrized
 //        appiumService = AppiumServerManager.startAppiumService("127.0.0.1", 4723);
         driver = DriverFactory.getDriver();
         PlatformUtils.setPlatform(platformName);

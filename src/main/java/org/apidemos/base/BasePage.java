@@ -53,12 +53,12 @@ public class BasePage {
         return driver.findElement(By.xpath("//*[@text='" + text + "']"));
     }
 
-    public WebElement findByAccessibilityId(String accessibilityId) {
-        return driver.findElement(AppiumBy.accessibilityId(accessibilityId));
-    }
-
     public WebElement findElementByDynamicXpath(String xpath) {
         return driver.findElement(By.xpath(xpath));
+    }
+
+    public WebElement findByAccessibilityId(String accessibilityId) {
+        return driver.findElement(AppiumBy.accessibilityId(accessibilityId));
     }
 
     public boolean isElementVisible(WebElement element, int timeToWait) {
@@ -318,6 +318,12 @@ public class BasePage {
         }
     }
 
+    public WebElement scrollToElementByAttributeAndValue(String attr, String value) {
+        return driver.findElement(AppiumBy.androidUIAutomator(
+                "new UiScrollable(new UiSelector().scrollable(true))" +
+                        ".scrollIntoView(new UiSelector()." + attr + "(\"" + value + "\"))"));
+    }
+
     public void waitInSeconds(int seconds) {
         try {
             Thread.sleep(seconds * 1000L);
@@ -383,10 +389,4 @@ public class BasePage {
     }
 
 
-
-    public WebElement scrollToElementByAttributeAndValue(String attr, String value) {
-        return driver.findElement(AppiumBy.androidUIAutomator(
-                "new UiScrollable(new UiSelector().scrollable(true))" +
-                        ".scrollIntoView(new UiSelector().text(\"" + value + "\"))"));
-    }
 }
