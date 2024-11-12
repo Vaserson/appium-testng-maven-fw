@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <suite name="Suite">
 
+    <listeners>
+        <!--Doesn't work, needs fix-->
+
+        <!-- suite level for all classes. Also can be called in each test class if needed -->
+        <listener class-name="org.apidemos.listeners.TestListener"/>
+    </listeners>
+
     <test name="Android">
         <parameter name="platformName" value="Android"/>
         <parameter name="noReset" value="true"/>
