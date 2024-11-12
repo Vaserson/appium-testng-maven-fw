@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 
 import java.time.Duration;
 
-@Listeners(TestListener.class)
+//@Listeners(TestListener.class)
 public class FirstTest extends BaseTest{
 
     @Test
