@@ -16,7 +16,7 @@ import java.util.Date;
 
 public class TestUtils {
 
-    public static final long WAIT = 1;
+    public static final long WAIT = 10;
 
     private TestUtils() {}
 

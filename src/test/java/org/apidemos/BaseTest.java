@@ -6,6 +6,7 @@ import io.appium.java_client.service.local.AppiumDriverLocalService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apidemos.appium.AppiumServerManager;
+import org.apidemos.base.BasePage;
 import org.apidemos.driver.DriverFactory;
 import org.apidemos.utils.PlatformUtils;
 import org.apidemos.utils.PropertyUtils;
@@ -29,7 +30,7 @@ public class BaseTest {
     @Parameters({"platformName"})
     @BeforeTest
     public void beforeTest(@Optional("ANDROID") String platformName) throws IOException {
-        appiumService = AppiumServerManager.startAppiumService("127.0.0.1", 4723);
+//        appiumService = AppiumServerManager.startAppiumService("127.0.0.1", 4723);
         driver = DriverFactory.getDriver();
         PlatformUtils.setPlatform(platformName);
         try {
@@ -47,6 +48,8 @@ public class BaseTest {
 
     @BeforeMethod
     public void setUp() {
+        new BasePage().closeApp(PropertyUtils.getProperty("androidAppPackage"), driver);
+        new BasePage().openApp(PropertyUtils.getProperty("androidAppPackage"), driver);
         ((CanRecordScreen) driver).startRecordingScreen();
     }
 
@@ -58,6 +61,12 @@ public class BaseTest {
 
         TestUtils.getScreenshotOnFailedMethod(result.getStatus(), result.getName());
         TestUtils.stopVideoRecording(driver, result.getStatus(), result.getName());
+        new BasePage().closeApp(PropertyUtils.getProperty("androidAppPackage"), driver);
+    }
+
+    @AfterTest
+    public void afterTest() {
+//        AppiumServerManager.stopAppiumService();
     }
 
 }

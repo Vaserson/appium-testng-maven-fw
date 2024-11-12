@@ -87,7 +87,7 @@ public final class PropertyUtils {
     }
 
     public static String getConfigProperty(String key) {
-        logger.info("Searching property '{}' inside diyConfig.properties file", key);
+        logger.info("Searching property '{}' inside properties file", key);
         String property = CONFIGMAP.get(key);
         if (Objects.nonNull(property)) {
             logger.info("Property for '{}' is: {}.", key, property);
