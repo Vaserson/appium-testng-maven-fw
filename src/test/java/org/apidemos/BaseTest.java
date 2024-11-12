@@ -1,7 +1,9 @@
 package org.apidemos;
 
+import io.appium.java_client.service.local.AppiumDriverLocalService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apidemos.appium.AppiumServerManager;
 import org.apidemos.driver.DriverFactory;
 import org.apidemos.utils.PropertyUtils;
 import org.apidemos.utils.TestUtils;
@@ -18,10 +20,13 @@ public class BaseTest {
     InputStream stringsXml;
     protected static HashMap<String, String> strings = new HashMap<>();
 
+    protected static AppiumDriverLocalService appiumService;
+
     private static final Logger LOGGER = LogManager.getLogger(BaseTest.class);
 
     @BeforeTest
     public void beforeTest() throws IOException {
+        appiumService = AppiumServerManager.startAppiumService("127.0.0.1", 4723);
         try {
             String xmlFileName = "strings.xml"; //TODO Move to constants
             stringsXml = getClass().getClassLoader().getResourceAsStream(xmlFileName);
