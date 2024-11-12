@@ -1,5 +1,7 @@
 package org.apidemos;
 
+import io.appium.java_client.AppiumDriver;
+import io.appium.java_client.screenrecording.CanRecordScreen;
 import io.appium.java_client.service.local.AppiumDriverLocalService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,12 +23,14 @@ public class BaseTest {
     protected static HashMap<String, String> strings = new HashMap<>();
 
     protected static AppiumDriverLocalService appiumService;
+    protected static AppiumDriver driver;
 
     private static final Logger LOGGER = LogManager.getLogger(BaseTest.class);
 
     @BeforeTest
     public void beforeTest() throws IOException {
         appiumService = AppiumServerManager.startAppiumService("127.0.0.1", 4723);
+        driver = DriverFactory.getDriver();
         try {
             String xmlFileName = "strings.xml"; //TODO Move to constants
             stringsXml = getClass().getClassLoader().getResourceAsStream(xmlFileName);
@@ -41,7 +45,9 @@ public class BaseTest {
     }
 
     @BeforeMethod
-    public void setUp() {}
+    public void setUp() {
+        ((CanRecordScreen) driver).startRecordingScreen();
+    }
 
     @AfterMethod
     public void tearDown(ITestResult result) {
@@ -50,6 +56,7 @@ public class BaseTest {
         } catch (Exception ignored) {}
 
         TestUtils.getScreenshotOnFailedMethod(result.getStatus(), result.getName());
+        TestUtils.stopVideoRecording(driver, result.getStatus(), result.getName());
     }
 
 }
