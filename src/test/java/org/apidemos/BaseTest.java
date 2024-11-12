@@ -7,12 +7,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apidemos.appium.AppiumServerManager;
 import org.apidemos.driver.DriverFactory;
+import org.apidemos.utils.PlatformUtils;
 import org.apidemos.utils.PropertyUtils;
 import org.apidemos.utils.TestUtils;
 import org.testng.ITestResult;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,10 +26,12 @@ public class BaseTest {
 
     private static final Logger LOGGER = LogManager.getLogger(BaseTest.class);
 
+    @Parameters({"platformName"})
     @BeforeTest
-    public void beforeTest() throws IOException {
+    public void beforeTest(@Optional("ANDROID") String platformName) throws IOException {
         appiumService = AppiumServerManager.startAppiumService("127.0.0.1", 4723);
         driver = DriverFactory.getDriver();
+        PlatformUtils.setPlatform(platformName);
         try {
             String xmlFileName = "strings.xml"; //TODO Move to constants
             stringsXml = getClass().getClassLoader().getResourceAsStream(xmlFileName);
