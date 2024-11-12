@@ -1,24 +1,27 @@
 package org.apidemos;
 
-import io.appium.java_client.AppiumBy;
-import org.apidemos.driver.DriverFactory;
-import org.apidemos.listeners.TestListener;
-import org.apidemos.utils.TestUtils;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.testng.annotations.Listeners;
+import org.apidemos.pages.MenuPage;
+import org.apidemos.pages.ViewsButtonsPage;
 import org.testng.annotations.Test;
-
-import java.time.Duration;
+import org.testng.asserts.SoftAssert;
 
 //@Listeners(TestListener.class)
 public class FirstTest extends BaseTest{
 
     @Test
     public void firstTest() {
-        WebDriverWait wait = new WebDriverWait(DriverFactory.getDriver(), Duration.ofSeconds(TestUtils.WAIT));
-        System.out.println("First test");
-        wait.until(ExpectedConditions.presenceOfElementLocated(AppiumBy.accessibilityId("App"))).click();
+        new MenuPage()
+                .openMenu("Views")
+                .openMenu("Buttons");
+
+        SoftAssert softAssert = new SoftAssert();
+
+        ViewsButtonsPage viewsButtonsPage = new ViewsButtonsPage();
+        softAssert.assertFalse(viewsButtonsPage.isToggleButtonOn());
+        viewsButtonsPage.tapToggleButton();
+        softAssert.assertTrue(viewsButtonsPage.isToggleButtonOn());
+
+        softAssert.assertAll();
     }
 
 }
