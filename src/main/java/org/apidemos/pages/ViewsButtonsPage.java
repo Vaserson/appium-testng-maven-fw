@@ -1,19 +1,14 @@
 package org.apidemos.pages;
 
-import io.appium.java_client.pagefactory.AndroidFindBy;
+import static io.appium.java_client.AppiumBy.xpath;
 import org.apidemos.base.BasePage;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.By;
 
 public class ViewsButtonsPage extends BasePage {
 
-    @AndroidFindBy(xpath = "//android.widget.Button[@text='NORMAL']")
-    private WebElement normalBtn;
-
-    @AndroidFindBy(xpath = "//android.widget.Button[@text='SMALL']")
-    private WebElement smallBtn;
-
-    @AndroidFindBy(xpath = "//android.widget.ToggleButton")
-    private WebElement toggleBtn;
+    private final By normalBtn = xpath("//android.widget.Button[@text='NORMAL']");
+    private final By smallBtn = xpath("//android.widget.Button[@text='SMALL']");
+    private final By toggleBtn = xpath("//android.widget.ToggleButton");
 
 
 

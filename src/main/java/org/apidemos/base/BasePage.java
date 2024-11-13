@@ -50,25 +50,33 @@ public class BasePage {
     }
 
     public WebElement findElementByDynamicText(String text) {
-        return driver.findElement(By.xpath("//*[@text='" + text + "']"));
+        LOGGER.info("Looking for an element with text: {}", text);
+        return driver.findElement(AppiumBy.xpath("//*[@text='" + text + "']"));
     }
 
     public WebElement findElementByDynamicXpath(String xpath) {
-        return driver.findElement(By.xpath(xpath));
+        LOGGER.info("Looking for an element with xpath: {}", xpath);
+        return driver.findElement(AppiumBy.xpath(xpath));
     }
 
     public WebElement findByAccessibilityId(String accessibilityId) {
+        LOGGER.info("Looking for an element with accessibilityId: {}", accessibilityId);
         return driver.findElement(AppiumBy.accessibilityId(accessibilityId));
     }
 
     public boolean isElementVisible(WebElement element, int timeToWait) {
+        LOGGER.info("Checking visibility of element: {}", element);
         FluentWait<AppiumDriver> fluentWait = new FluentWait<>(driver)
                 .withTimeout(Duration.ofSeconds(timeToWait))
                 .pollingEvery(Duration.ofSeconds(1))
                 .ignoring(NoSuchElementException.class);
         try {
-            return !fluentWait.until(ExpectedConditions.visibilityOfAllElements(element)).isEmpty();
+            LOGGER.info("Waiting for element visibility for up to {} seconds", timeToWait);
+            boolean isVisible = !fluentWait.until(ExpectedConditions.visibilityOfAllElements(element)).isEmpty();
+            LOGGER.info("Element is visible: {}", isVisible);
+            return isVisible;
         } catch (TimeoutException e) {
+            LOGGER.warn("Element was not visible within {} seconds", timeToWait);
             return false;
         }
     }
@@ -80,6 +88,13 @@ public class BasePage {
         LOGGER.info("Element: {} is found", element);
     }
 
+    public WebElement waitForVisibility(By element) {
+        LOGGER.info("Waiting for {} for default {} seconds", element, TestUtils.WAIT);
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(TestUtils.WAIT));
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(element));
+//        LOGGER.info("Element: {} is found", element);
+    }
+
     public void waitForVisibility(WebElement element, int timeToWait) {
         LOGGER.info("Waiting for {} for {} seconds", element, timeToWait);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeToWait));
@@ -88,17 +103,30 @@ public class BasePage {
     }
 
     public boolean waitForInvisibility(WebElement element, int timeToWait) {
+        LOGGER.info("Waiting for invisibility of {} for {} seconds", element, timeToWait);
         FluentWait<AppiumDriver> fluentWait = new FluentWait<>(driver)
                 .withTimeout(Duration.ofSeconds(timeToWait))
                 .pollingEvery(Duration.ofSeconds(1));
-        return fluentWait
-                .until(ExpectedConditions.invisibilityOfAllElements(element));
+        try {
+            boolean isInvisible = fluentWait.until(ExpectedConditions.invisibilityOfAllElements(element));
+            LOGGER.info("Element: {} is now invisible: {}", element, isInvisible);
+            return isInvisible;
+        } catch (TimeoutException e) {
+            LOGGER.warn("Element: {} was not invisible within {} seconds", element, timeToWait);
+            return false;
+        }
     }
 
     public void click(WebElement element) {
         waitForVisibility(element);
         LOGGER.info("Clicking element {}", element);
         element.click();
+    }
+
+    public void click(By element) {
+        WebElement el = waitForVisibility(element);
+        LOGGER.info("Clicking element {}", element);
+        el.click();
     }
 
     public void click(WebElement element, int timeToWait) {
@@ -109,11 +137,14 @@ public class BasePage {
 
     public void click(WebElement e1, WebElement e2) {
         try {
+            LOGGER.info("Trying to click the first of two element {}", e1);
             click(e1, 2);
         } catch (Exception ex1) {
             try {
+                LOGGER.info("Trying to click the second of two element {}", e2);
                 click(e2, 2);
             } catch (Exception ex2) {
+                LOGGER.warn("Neither of the two elements was clicked");
                 throw new NoSuchElementException("All elements for click cannot be found");
             }
         }
@@ -121,9 +152,11 @@ public class BasePage {
 
     public void clickWhileExist(WebElement element) {
         LOGGER.debug(element);
+        int tries = 5;
         try {
-            while (element.isDisplayed()) {
+            while (element.isDisplayed() && tries > 0) {
                 LOGGER.info("Trying to click: {}", element);
+                tries -= 1;
                 element.click();
             }
         } catch (NoSuchElementException e) {
@@ -145,6 +178,10 @@ public class BasePage {
         }
     }
 
+    //TODO implement "byID functionality,
+    // remove .getName()
+    // fix logging
+    // add counter
     public void clickWhileExistById(WebElement element) {
         LOGGER.info(element.getClass().getName());
         try {
@@ -216,16 +253,23 @@ public class BasePage {
         e.sendKeys(txt);
     }
 
-    public String getText(WebElement e) {
+    public String getText(WebElement element) {
         String platform = PlatformUtils.getPlatform();
-        switch (platform) {
-            case "ANDROID":
-                return getAttribute(e, "text");
-            case "IOS":
-                return getAttribute(e, "label");
-            default:
-                throw new IllegalStateException("Unsupported platform: " + platform);
-        }
+        return switch (platform) {
+            case "ANDROID" -> getAttribute(element, "text");
+            case "IOS" -> getAttribute(element, "label");
+            default -> throw new IllegalStateException("Unsupported platform: " + platform);
+        };
+    }
+
+    public String getText(By element) {
+        String platform = PlatformUtils.getPlatform();
+        WebElement el = waitForVisibility(element);
+        return switch (platform) {
+            case "ANDROID" -> getAttribute(el, "text");
+            case "IOS" -> getAttribute(el, "label");
+            default -> throw new IllegalStateException("Unsupported platform: " + platform);
+        };
     }
 
     public void scrollByScreen(String direction) {
