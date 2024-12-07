@@ -50,7 +50,7 @@ public class BaseTest {
     @BeforeMethod
     public void setUp() {
 //        new BasePage().closeApp(PropertyUtils.getProperty("androidAppPackage"), driver);
-//        new BasePage().openApp(PropertyUtils.getProperty("androidAppPackage"), driver);
+        new BasePage().openApp(PropertyUtils.getProperty("androidAppPackage"), driver);
         ((CanRecordScreen) driver).startRecordingScreen();
     }
 

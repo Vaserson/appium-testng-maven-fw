@@ -22,6 +22,8 @@ public class DriverFactory {
                     .noReset();
 
             driver = new AndroidDriver(url, options);
+
+            driver.setSetting("imageMatchThreshold", "0.6");
         } catch (Exception e) {
             e.printStackTrace();
         }

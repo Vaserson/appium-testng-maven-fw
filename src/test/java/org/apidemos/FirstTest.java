@@ -17,9 +17,9 @@ public class FirstTest extends BaseTest{
         SoftAssert softAssert = new SoftAssert();
 
         ViewsButtonsPage viewsButtonsPage = new ViewsButtonsPage();
-        softAssert.assertFalse(viewsButtonsPage.isToggleButtonOn());
+        softAssert.assertTrue(viewsButtonsPage.checkToggleButtonState("OFF"));
         viewsButtonsPage.tapToggleButton();
-        softAssert.assertTrue(viewsButtonsPage.isToggleButtonOn());
+        softAssert.assertTrue(viewsButtonsPage.checkToggleButtonState("ON"));
 
         softAssert.assertAll();
     }

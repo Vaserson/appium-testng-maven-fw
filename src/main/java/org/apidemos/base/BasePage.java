@@ -19,6 +19,7 @@ import io.appium.java_client.touch.offset.PointOption;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.*;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.interactions.PointerInput;
 import org.openqa.selenium.interactions.Sequence;
 import org.openqa.selenium.support.PageFactory;
@@ -26,7 +27,12 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.Duration;
+import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 
 public class BasePage {
@@ -278,7 +284,7 @@ public class BasePage {
     }
 
     public void scrollToElementWhileAnotherElement(WebElement element, WebElement anotherElement, String direction) {
-        int maxScrollAttempts = 10; // Define a maximum number of scroll attempts
+        int maxScrollAttempts = 10;
 
         while (maxScrollAttempts > 0) {
             try {
@@ -308,8 +314,8 @@ public class BasePage {
     public void scrollByScreenTimes(String direction, int repeater) {
         Dimension dim = driver.manage().window().getSize();
         int x = dim.getWidth() / 2;
-        int startY = 0;
-        int endY = 0;
+        int startY;
+        int endY;
 
         if (direction.equalsIgnoreCase("up")) {
             startY = (int) (dim.getHeight() * 0.2);
@@ -401,30 +407,44 @@ public class BasePage {
         return dateTime;
     }
 
-    public void dragFromPointToPoint(PointOption start, PointOption finish) {
-        TouchAction action = new TouchAction((AndroidDriver)driver);
+    public void dragFromPointToPoint(int xStart, int yStart, int xFinish, int yFinish) {
+        PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
+        Sequence dragAndDrop = new Sequence(finger, 1);
 
-        action.press(start);
-        action.waitAction(WaitOptions.waitOptions(Duration.ofMillis(100)));
-        action.moveTo(finish);
-        action.perform();
+        dragAndDrop.addAction(finger.createPointerMove(
+                Duration.ZERO,
+                PointerInput.Origin.viewport(),
+                xStart,
+                yStart
+        ));
+
+        dragAndDrop.addAction(finger.createPointerDown(PointerInput.MouseButton.LEFT.asArg()));
+
+        dragAndDrop.addAction(finger.createPointerMove(
+                Duration.ofMillis(1000),
+                PointerInput.Origin.viewport(),
+                new Point(xFinish, yFinish)
+        ));
+
+        dragAndDrop.addAction(finger.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+
+        driver.perform(Collections.singletonList(dragAndDrop));
     }
 
     public void manageNotifications(Boolean show) {
         Dimension screenSize = getScreenSize();
-        int yMargin = 3;
+        int yTop = 3;
         int xMid = screenSize.width / 2;
-        PointOption top = PointOption.point(xMid, yMargin);
-        PointOption bottom = PointOption.point(xMid, screenSize.height - yMargin);
+        int yBottom = screenSize.height - yTop;
 
         if(show) {
-            dragFromPointToPoint(top, bottom);
+            dragFromPointToPoint(xMid, yTop, xMid, yBottom);
         } else {
-            dragFromPointToPoint(bottom, top);
+            dragFromPointToPoint(xMid, yBottom, xMid, yTop);
         }
     }
 
-    public Dimension getScreenSize() {
+    private Dimension getScreenSize() {
         return driver.manage().window().getSize();
     }
 
@@ -433,4 +453,36 @@ public class BasePage {
     }
 
 
+
+
+    // IMAGE LOCATOR
+    private static String getReferenceImageB64(String imagePath) throws IOException {
+        File refImgFile = new File(imagePath);
+        return Base64.getEncoder().encodeToString(Files.readAllBytes(refImgFile.toPath()));
+    }
+
+    public WebElement findElementByImage(String imagePath) {
+            // Prepare base64 image for searching
+        String base64Image = null;
+        try {
+            base64Image = getReferenceImageB64(imagePath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        By imageLocator = AppiumBy.image(base64Image);
+
+            LOGGER.info("Looking for element by image {} for default {} seconds", imageLocator, TestUtils.WAIT);
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(TestUtils.WAIT));
+
+            WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(imageLocator));
+            LOGGER.info("isDisplayed: {}", element.isDisplayed()); // true
+            LOGGER.info("getSize: {}", element.getSize()); // (71, 69)
+            LOGGER.info("getLocation: {}", element.getLocation()); // (300, 1528)
+            LOGGER.info("getAttribute visual: {}", element.getAttribute("visual"));
+            LOGGER.info("getAttribute score: {}", element.getAttribute("score"));
+            //visual returns matched image as base64 data if getMatchedImageResult is true
+            //score returns the similarity score as a float number in range [0.0, 1.0] sine Appium 1.18.0
+
+        return element;
+    }
 }
