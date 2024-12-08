@@ -9,19 +9,13 @@ import org.apidemos.utils.PlatformUtils;
 import org.apidemos.utils.TestUtils;
 import io.appium.java_client.AppiumBy;
 import io.appium.java_client.AppiumDriver;
-import io.appium.java_client.TouchAction;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.nativekey.AndroidKey;
 import io.appium.java_client.android.nativekey.KeyEvent;
 import io.appium.java_client.pagefactory.AppiumFieldDecorator;
-import io.appium.java_client.touch.WaitOptions;
-import io.appium.java_client.touch.offset.PointOption;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.*;
-import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.interactions.PointerInput;
-import org.openqa.selenium.interactions.Sequence;
 import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
@@ -32,16 +26,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.List;
 
 public class BasePage {
     private static final Logger LOGGER = LogManager.getLogger(BasePage.class);
     protected static String dateTime;
     protected AppiumDriver driver;
+    protected TouchAction touchAction;
 
     public BasePage() {
         this.driver = DriverFactory.getDriver();
+        this.touchAction = new TouchAction(driver);
         PageFactory.initElements(new AppiumFieldDecorator(driver, Duration.ofSeconds(10)), this);
     }
 
@@ -55,23 +50,35 @@ public class BasePage {
         ((AndroidDriver) driver).terminateApp(appPackage);
     }
 
+    private String getElementDescription(By locator) {
+        return locator.toString().replace("By.", "");
+    }
+
+    private String getElementDescription(WebElement element) {
+        String description = element.toString();
+        if (description.contains("->")) {
+            return description.substring(description.indexOf("->") + 2).trim();
+        }
+        return description;
+    }
+
     public WebElement findElementByDynamicText(String text) {
-        LOGGER.info("Looking for an element with text: {}", text);
+        LOGGER.info("Looking for an element with text: [{}]", text);
         return driver.findElement(AppiumBy.xpath("//*[@text='" + text + "']"));
     }
 
     public WebElement findElementByDynamicXpath(String xpath) {
-        LOGGER.info("Looking for an element with xpath: {}", xpath);
+        LOGGER.info("Looking for an element with xpath: [{}]", xpath);
         return driver.findElement(AppiumBy.xpath(xpath));
     }
 
     public WebElement findByAccessibilityId(String accessibilityId) {
-        LOGGER.info("Looking for an element with accessibilityId: {}", accessibilityId);
+        LOGGER.info("Looking for an element with accessibilityId: [{}]", accessibilityId);
         return driver.findElement(AppiumBy.accessibilityId(accessibilityId));
     }
 
     public boolean isElementVisible(WebElement element, int timeToWait) {
-        LOGGER.info("Checking visibility of element: {}", element);
+        LOGGER.info("Checking visibility of element: [{}]", getElementDescription(element));
         FluentWait<AppiumDriver> fluentWait = new FluentWait<>(driver)
                 .withTimeout(Duration.ofSeconds(timeToWait))
                 .pollingEvery(Duration.ofSeconds(1))
@@ -79,7 +86,7 @@ public class BasePage {
         try {
             LOGGER.info("Waiting for element visibility for up to {} seconds", timeToWait);
             boolean isVisible = !fluentWait.until(ExpectedConditions.visibilityOfAllElements(element)).isEmpty();
-            LOGGER.info("Element is visible: {}", isVisible);
+            LOGGER.info("Element is {}", isVisible ? "visible" : "invisible");
             return isVisible;
         } catch (TimeoutException e) {
             LOGGER.warn("Element was not visible within {} seconds", timeToWait);
@@ -88,66 +95,66 @@ public class BasePage {
     }
 
     public void waitForVisibility(WebElement element) {
-        LOGGER.info("Waiting for {} for default {} seconds", element, TestUtils.WAIT);
+        LOGGER.info("Waiting for element [{}] for default {} seconds", getElementDescription(element), TestUtils.WAIT);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(TestUtils.WAIT));
         wait.until(ExpectedConditions.visibilityOf(element));
-        LOGGER.info("Element: {} is found", element);
+        LOGGER.info("Element [{}] is found", getElementDescription(element));
     }
 
     public WebElement waitForVisibility(By element) {
-        LOGGER.info("Waiting for {} for default {} seconds", element, TestUtils.WAIT);
+        LOGGER.info("Waiting for element [{}] for default {} seconds", getElementDescription(element), TestUtils.WAIT);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(TestUtils.WAIT));
         return wait.until(ExpectedConditions.visibilityOfElementLocated(element));
 //        LOGGER.info("Element: {} is found", element);
     }
 
     public void waitForVisibility(WebElement element, int timeToWait) {
-        LOGGER.info("Waiting for {} for {} seconds", element, timeToWait);
+        LOGGER.info("Waiting for [{}] for {} seconds", getElementDescription(element), timeToWait);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeToWait));
         wait.until(ExpectedConditions.visibilityOf(element));
-        LOGGER.info("Element: {} is found", element);
+        LOGGER.info("Element [{}] is found", getElementDescription(element));
     }
 
     public boolean waitForInvisibility(WebElement element, int timeToWait) {
-        LOGGER.info("Waiting for invisibility of {} for {} seconds", element, timeToWait);
+        LOGGER.info("Waiting for invisibility of [{}] for {} seconds", getElementDescription(element), timeToWait);
         FluentWait<AppiumDriver> fluentWait = new FluentWait<>(driver)
                 .withTimeout(Duration.ofSeconds(timeToWait))
                 .pollingEvery(Duration.ofSeconds(1));
         try {
             boolean isInvisible = fluentWait.until(ExpectedConditions.invisibilityOfAllElements(element));
-            LOGGER.info("Element: {} is now invisible: {}", element, isInvisible);
+            LOGGER.info("Element [{}] is {}", getElementDescription(element), isInvisible ? "invisible" : "visible");
             return isInvisible;
         } catch (TimeoutException e) {
-            LOGGER.warn("Element: {} was not invisible within {} seconds", element, timeToWait);
+            LOGGER.warn("Element [{}] did not become invisible within {} seconds", getElementDescription(element), timeToWait);
             return false;
         }
     }
 
     public void click(WebElement element) {
         waitForVisibility(element);
-        LOGGER.info("Clicking element {}", element);
+        LOGGER.info("Clicking element [{}]", getElementDescription(element));
         element.click();
     }
 
     public void click(By element) {
         WebElement el = waitForVisibility(element);
-        LOGGER.info("Clicking element {}", element);
+        LOGGER.info("Clicking element [{}]", getElementDescription(element));
         el.click();
     }
 
     public void click(WebElement element, int timeToWait) {
         waitForVisibility(element, timeToWait);
-        LOGGER.info("Trying to click an element {} for {} seconds", element, timeToWait);
+        LOGGER.info("Trying to click an element [{}] for {} seconds", getElementDescription(element), timeToWait);
         element.click();
     }
 
     public void click(WebElement e1, WebElement e2) {
         try {
-            LOGGER.info("Trying to click the first of two element {}", e1);
+            LOGGER.info("Trying to click the first of two elements [{}]", getElementDescription(e1));
             click(e1, 2);
         } catch (Exception ex1) {
             try {
-                LOGGER.info("Trying to click the second of two element {}", e2);
+                LOGGER.info("Trying to click the second of two elements [{}]", getElementDescription(e2));
                 click(e2, 2);
             } catch (Exception ex2) {
                 LOGGER.warn("Neither of the two elements was clicked");
@@ -161,12 +168,12 @@ public class BasePage {
         int tries = 5;
         try {
             while (element.isDisplayed() && tries > 0) {
-                LOGGER.info("Trying to click: {}", element);
+                LOGGER.info("Clicking [{}] while exists", getElementDescription(element));
                 tries -= 1;
                 element.click();
             }
         } catch (NoSuchElementException e) {
-            LOGGER.info("No elements {} left to be clicked", element);
+            LOGGER.info("No elements [{}] left to be clicked", getElementDescription(element));
         }
     }
 
@@ -175,7 +182,7 @@ public class BasePage {
         int tries = 0;
         try {
             while (tries != counter) {
-                LOGGER.info("Trying to click: {}", element);
+                LOGGER.info("Clicking [{}] while exists", getElementDescription(element));
                 tries += 1;
                 element.click();
             }
@@ -192,17 +199,17 @@ public class BasePage {
         LOGGER.info(element.getClass().getName());
         try {
             while (driver.findElements(By.id(element.toString())) != null) {
-                LOGGER.info("Trying to click: {}", element);
+                LOGGER.info("Clicking [{}] while exists", getElementDescription(element));
                 element.click();
             }
         } catch (NoSuchElementException e) {
-            LOGGER.info("{} is clicked", element);
+            LOGGER.info("{} is clicked", getElementDescription(element));
         }
     }
 
     public String getAttribute(WebElement element, String attr) {
         waitForVisibility(element);
-        LOGGER.info("Getting attribute {} from element {}", attr, element);
+        LOGGER.info("Getting attribute {} from element [{}]", attr, getElementDescription(element));
         String attribute = element.getAttribute(attr);
         LOGGER.info("{} = {}", attr, attribute);
         return attribute;
@@ -216,17 +223,13 @@ public class BasePage {
         int yCenter = element.getRect().y + (element.getSize().height / 2);
         LOGGER.info("yCenter = {}", yCenter);
 
-        PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
-        Sequence tap = new Sequence(finger, 1);
-        tap.addAction(finger.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), xCenter, yCenter))
-                .addAction(finger.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
-                .addAction(finger.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
-        driver.perform(List.of(tap));
+        touchAction.tap(xCenter, yCenter);
     }
 
-    public void clear(WebElement e) {
-        waitForVisibility(e);
-        e.clear();
+    public void clear(WebElement element) {
+        waitForVisibility(element);
+        LOGGER.info("Clearing element [{}]", getElementDescription(element));
+        element.clear();
     }
 
     public void clickIfExists(WebElement element) {
@@ -278,9 +281,9 @@ public class BasePage {
         };
     }
 
-    public void scrollByScreen(String direction) {
+    public void scroll(String direction) {
         LOGGER.info("Scroll screen {}", direction);
-        scrollByScreenTimes(direction, 1);
+        scroll(direction, "scroll", 1);
     }
 
     public void scrollToElementWhileAnotherElement(WebElement element, WebElement anotherElement, String direction) {
@@ -298,7 +301,7 @@ public class BasePage {
                     }
                 } catch (NoSuchElementException e2) {
                     String beforeSwipe = driver.getPageSource();
-                    scrollByScreen(direction);
+                    scroll(direction);
                     waitInSeconds(4);
                     String afterSwipe = driver.getPageSource();
                     if (beforeSwipe.equals(afterSwipe)) {
@@ -311,74 +314,103 @@ public class BasePage {
         }
     }
 
-    public void scrollByScreenTimes(String direction, int repeater) {
+    public void scroll(String direction, String type, int repeater) {
+        LOGGER.info("{} screen {} {} times", type, direction, repeater);
         Dimension dim = driver.manage().window().getSize();
-        int x = dim.getWidth() / 2;
+        int startX;;
         int startY;
+        int endX;
         int endY;
+        Duration duration = Duration.ofMillis(700);
 
         if (direction.equalsIgnoreCase("up")) {
+            startX = dim.getWidth() / 2;
+            endX = dim.getWidth() / 2;
             startY = (int) (dim.getHeight() * 0.2);
             endY = (int) (dim.getHeight() * 0.8);
-        } else {
+        } else if (direction.equalsIgnoreCase("down")) {
+            startX = dim.getWidth() / 2;
+            endX = dim.getWidth() / 2;
             startY = (int) (dim.getHeight() * 0.8);
             endY = (int) (dim.getHeight() * 0.2);
+        } else if (direction.equalsIgnoreCase("left")) {
+            startX = (int) (dim.getWidth() * 0.2);
+            endX = (int) (dim.getWidth() * 0.8);
+            startY = dim.getHeight() / 2;
+            endY = dim.getHeight() / 2;
+        } else if (direction.equalsIgnoreCase("right")) {
+            startX = (int) (dim.getWidth() * 0.8);
+            endX = (int) (dim.getWidth() * 0.2);
+            startY = dim.getHeight() / 2;
+            endY = dim.getHeight() / 2;
+        } else {
+            throw new IllegalArgumentException();
         }
 
-        PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
-        Sequence swipe = new Sequence(finger, 1);
-        for (int i = 0; i < repeater; i++) {
-            swipe.addAction(finger.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), x, startY));
-            swipe.addAction(finger.createPointerDown(PointerInput.MouseButton.LEFT.asArg()));
-            swipe.addAction(finger.createPointerMove(Duration.ofMillis(700), PointerInput.Origin.viewport(), x, endY));
-            swipe.addAction(finger.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+        switch (type) {
+            case ("scroll") -> {}
+            case ("swipe") -> {
+                int temp = startX;
+                startX = endX;
+                endX = temp;
+                duration = Duration.ofMillis(400);
+            }
+            case ("flick") -> {
+                int temp = startX;
+                startX = endX;
+                endX = temp;
+                duration = Duration.ofMillis(100);
+            }
+            default ->  throw new IllegalArgumentException("Unsupported type: " + type);
         }
-        driver.perform(List.of(swipe));
+
+        for (int i = 0; i < repeater; i++) {
+            touchAction.swipe(startX, startY, endX, endY, duration);
+        }
     }
 
-    public void scrollToElement(WebElement element, String direction) {
-        int limit = 10; // Default
+    public WebElement scrollToElement(WebElement element, String direction) {
+        LOGGER.info("Scrolling {} to an element: {}", direction, element);
+        int limit = 10;
         while (limit > 0) {
             try {
                 element.isDisplayed();
-                break;
+                return element;
             } catch (NoSuchElementException e) {
-                String beforeSwipe = driver.getPageSource();
-                scrollByScreen(direction);
-                waitInSeconds(4);
-                String afterSwipe = driver.getPageSource();
-                if (beforeSwipe.equals(afterSwipe)) {
-                    throw new EndOfPageException("No element: " + element + " was found while scrolling and the end of the page is reached");
-                }
-                LOGGER.info("Attempts left: {} trying to scroll to element: {}", limit, element);
+                scroll(direction);
                 limit--;
-                LOGGER.info("NoSuchElementException caught");
             }
         }
+        throw new EndOfPageException("No element: " + element + " was found while scrolling and the end of the page is reached");
     }
 
-    public void scrollToElementByText(String text, String direction) {
+    public WebElement scrollToElementByText(String text, String direction) {
+        LOGGER.info("Scrolling {} to an element with text: {}", direction, text);
         int limit = 5;
-        while (driver.findElements(By.xpath("//*[@text='" + text + "']")).isEmpty() && limit > 0) {
-            scrollByScreen(direction);
+        while (limit > 0) {
+            List<WebElement> elements = driver.findElements(By.xpath("//*[@text='" + text + "']"));
+            if (!elements.isEmpty()) {
+                return elements.getFirst();
+            }
+            scroll(direction);
             limit--;
         }
-        if (limit == 0) {
-            throw new SwipeLimitExceededException("No element with text " + text + " was found");
-        }
+        throw new SwipeLimitExceededException("No element with text " + text + " was found");
     }
 
     public WebElement scrollToElementByAttributeAndValue(String attr, String value) {
+        LOGGER.info("Scrolling to an element with attribute: {} with value: {}", attr, value);
         return driver.findElement(AppiumBy.androidUIAutomator(
                 "new UiScrollable(new UiSelector().scrollable(true))" +
                         ".scrollIntoView(new UiSelector()." + attr + "(\"" + value + "\"))"));
     }
 
     public void waitInSeconds(int seconds) {
+        LOGGER.info("Waiting for {} seconds", seconds);
         try {
             Thread.sleep(seconds * 1000L);
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // Restore the interrupted state
+            Thread.currentThread().interrupt();
             throw new WaitInSecondsException("Thread was interrupted while waiting", e);
         }
     }
@@ -408,27 +440,7 @@ public class BasePage {
     }
 
     public void dragFromPointToPoint(int xStart, int yStart, int xFinish, int yFinish) {
-        PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
-        Sequence dragAndDrop = new Sequence(finger, 1);
-
-        dragAndDrop.addAction(finger.createPointerMove(
-                Duration.ZERO,
-                PointerInput.Origin.viewport(),
-                xStart,
-                yStart
-        ));
-
-        dragAndDrop.addAction(finger.createPointerDown(PointerInput.MouseButton.LEFT.asArg()));
-
-        dragAndDrop.addAction(finger.createPointerMove(
-                Duration.ofMillis(1000),
-                PointerInput.Origin.viewport(),
-                new Point(xFinish, yFinish)
-        ));
-
-        dragAndDrop.addAction(finger.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
-
-        driver.perform(Collections.singletonList(dragAndDrop));
+        touchAction.dragAndDrop(xStart, yStart, xFinish, yFinish, 1000L);
     }
 
     public void manageNotifications(Boolean show) {
@@ -457,6 +469,8 @@ public class BasePage {
 
     // IMAGE LOCATOR
     private static String getReferenceImageB64(String imagePath) throws IOException {
+        LOGGER.info("Getting reference image in path: {}", imagePath);
+
         File refImgFile = new File(imagePath);
         return Base64.getEncoder().encodeToString(Files.readAllBytes(refImgFile.toPath()));
     }
