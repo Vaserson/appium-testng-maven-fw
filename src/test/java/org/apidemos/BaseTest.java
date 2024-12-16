@@ -3,9 +3,6 @@ package org.apidemos;
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.screenrecording.CanRecordScreen;
 import io.appium.java_client.service.local.AppiumDriverLocalService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apidemos.appium.AppiumServerManager;
 import org.apidemos.base.BasePage;
 import org.apidemos.driver.DriverFactory;
 import org.apidemos.utils.PlatformUtils;
@@ -24,8 +21,6 @@ public class BaseTest {
 
     protected static AppiumDriverLocalService appiumService;
     protected static AppiumDriver driver;
-
-    private static final Logger LOGGER = LogManager.getLogger(BaseTest.class);
 
     @Parameters({"platformName"})
     @BeforeTest
@@ -50,7 +45,7 @@ public class BaseTest {
     @BeforeMethod
     public void setUp() {
 //        new BasePage().closeApp(PropertyUtils.getProperty("androidAppPackage"), driver);
-        new BasePage().openApp(PropertyUtils.getProperty("androidAppPackage"), driver);
+//        new BasePage().openApp(PropertyUtils.getProperty("androidAppPackage"), driver);
         ((CanRecordScreen) driver).startRecordingScreen();
     }
 

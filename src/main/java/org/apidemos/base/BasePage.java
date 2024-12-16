@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 
 public class BasePage {
     private static final Logger LOGGER = LogManager.getLogger(BasePage.class);
@@ -34,10 +35,16 @@ public class BasePage {
     protected AppiumDriver driver;
     protected TouchAction touchAction;
 
+
     public BasePage() {
         this.driver = DriverFactory.getDriver();
         this.touchAction = new TouchAction(driver);
         PageFactory.initElements(new AppiumFieldDecorator(driver, Duration.ofSeconds(10)), this);
+    }
+
+
+    public AppiumDriver getDriver() {
+        return driver;
     }
 
     public void openApp(String appPackage, WebDriver driver) {
@@ -64,53 +71,43 @@ public class BasePage {
 
     public WebElement findElementByDynamicText(String text) {
         LOGGER.info("Looking for an element with text: [{}]", text);
-        return driver.findElement(AppiumBy.xpath("//*[@text='" + text + "']"));
+        return waitForVisibility(AppiumBy.xpath("//*[@text='" + text + "']"));
     }
 
     public WebElement findElementByDynamicXpath(String xpath) {
         LOGGER.info("Looking for an element with xpath: [{}]", xpath);
-        return driver.findElement(AppiumBy.xpath(xpath));
+        return waitForVisibility(AppiumBy.xpath(xpath));
     }
 
     public WebElement findByAccessibilityId(String accessibilityId) {
         LOGGER.info("Looking for an element with accessibilityId: [{}]", accessibilityId);
-        return driver.findElement(AppiumBy.accessibilityId(accessibilityId));
+        return waitForVisibility(AppiumBy.accessibilityId(accessibilityId));
     }
 
-    public boolean isElementVisible(WebElement element, int timeToWait) {
-        LOGGER.info("Checking visibility of element: [{}]", getElementDescription(element));
-        FluentWait<AppiumDriver> fluentWait = new FluentWait<>(driver)
-                .withTimeout(Duration.ofSeconds(timeToWait))
-                .pollingEvery(Duration.ofSeconds(1))
-                .ignoring(NoSuchElementException.class);
-        try {
-            LOGGER.info("Waiting for element visibility for up to {} seconds", timeToWait);
-            boolean isVisible = !fluentWait.until(ExpectedConditions.visibilityOfAllElements(element)).isEmpty();
-            LOGGER.info("Element is {}", isVisible ? "visible" : "invisible");
-            return isVisible;
-        } catch (TimeoutException e) {
-            LOGGER.warn("Element was not visible within {} seconds", timeToWait);
-            return false;
+    public WebElement waitForVisibility(By element, long timeout) {
+        LOGGER.info("Waiting for element [{}] for {} seconds", getElementDescription(element), timeout);
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeout));
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(element));
+    }
+
+    public WebElement waitForVisibility(By element) {
+        return waitForVisibility(element, TestUtils.WAIT);
+    }
+
+    public WebElement waitForVisibility(WebElement element, int timeToWait) {
+        LOGGER.info("Waiting for [{}] for {} seconds", getElementDescription(element), timeToWait);
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeToWait));
+        WebElement foundElement = wait.until(ExpectedConditions.visibilityOf(element));
+        if (Objects.nonNull(foundElement)) {
+            LOGGER.info("Element [{}] is found", getElementDescription(element));
+            return foundElement;
         }
+        return null;
     }
 
     public void waitForVisibility(WebElement element) {
         LOGGER.info("Waiting for element [{}] for default {} seconds", getElementDescription(element), TestUtils.WAIT);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(TestUtils.WAIT));
-        wait.until(ExpectedConditions.visibilityOf(element));
-        LOGGER.info("Element [{}] is found", getElementDescription(element));
-    }
-
-    public WebElement waitForVisibility(By element) {
-        LOGGER.info("Waiting for element [{}] for default {} seconds", getElementDescription(element), TestUtils.WAIT);
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(TestUtils.WAIT));
-        return wait.until(ExpectedConditions.visibilityOfElementLocated(element));
-//        LOGGER.info("Element: {} is found", element);
-    }
-
-    public void waitForVisibility(WebElement element, int timeToWait) {
-        LOGGER.info("Waiting for [{}] for {} seconds", getElementDescription(element), timeToWait);
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeToWait));
         wait.until(ExpectedConditions.visibilityOf(element));
         LOGGER.info("Element [{}] is found", getElementDescription(element));
     }
@@ -130,16 +127,16 @@ public class BasePage {
         }
     }
 
-    public void click(WebElement element) {
-        waitForVisibility(element);
-        LOGGER.info("Clicking element [{}]", getElementDescription(element));
-        element.click();
-    }
-
     public void click(By element) {
         WebElement el = waitForVisibility(element);
         LOGGER.info("Clicking element [{}]", getElementDescription(element));
         el.click();
+    }
+
+    public void click(WebElement element) {
+        waitForVisibility(element);
+        LOGGER.info("Clicking element [{}]", getElementDescription(element));
+        element.click();
     }
 
     public void click(WebElement element, int timeToWait) {
@@ -209,7 +206,7 @@ public class BasePage {
 
     public String getAttribute(WebElement element, String attr) {
         waitForVisibility(element);
-        LOGGER.info("Getting attribute {} from element [{}]", attr, getElementDescription(element));
+        LOGGER.info("Getting attribute [{}] from element [{}]", attr, getElementDescription(element));
         String attribute = element.getAttribute(attr);
         LOGGER.info("{} = {}", attr, attribute);
         return attribute;
@@ -217,7 +214,7 @@ public class BasePage {
 
     public void getCoordinatesAndClick(WebElement element) {
         waitForVisibility(element);
-
+        LOGGER.info("Getting coordinates from element [{}]", getElementDescription(element));
         int xCenter = element.getRect().x + (element.getSize().width / 2);
         LOGGER.info("xCenter = {}", xCenter);
         int yCenter = element.getRect().y + (element.getSize().height / 2);
@@ -237,7 +234,7 @@ public class BasePage {
             waitForVisibility(element, 5);
             element.click();
         } catch (Exception e) {
-            LOGGER.info("Looks like the element is not there");
+            LOGGER.info("Element [{}] wasn't found for click", getElementDescription(element));
         }
     }
 
@@ -248,17 +245,17 @@ public class BasePage {
                 waitForVisibility(element2, 2);
                 click(element2);
             } catch (Exception e) {
-                LOGGER.info("no element for click");
+                LOGGER.info("Second of two element [{}] wasn't found for click", getElementDescription(element1));
             }
         } catch (Exception e) {
-            LOGGER.error("general element cannot be found");
+            LOGGER.info("First of two element [{}] wasn't found for click", getElementDescription(element1));
             throw new NoSuchElementException("general element cannot be found");
         }
     }
 
     public void sendKeys(WebElement e, String txt) {
         waitForVisibility(e);
-        LOGGER.info("Sending keys: {} to element {}", txt, e);
+        LOGGER.info("Sending keys: [{}] to element [{}]", txt, e);
         e.sendKeys(txt);
     }
 
@@ -370,7 +367,7 @@ public class BasePage {
     }
 
     public WebElement scrollToElement(WebElement element, String direction) {
-        LOGGER.info("Scrolling {} to an element: {}", direction, element);
+        LOGGER.info("Scrolling {} to an element [{}]", direction, element);
         int limit = 10;
         while (limit > 0) {
             try {
@@ -385,7 +382,7 @@ public class BasePage {
     }
 
     public WebElement scrollToElementByText(String text, String direction) {
-        LOGGER.info("Scrolling {} to an element with text: {}", direction, text);
+        LOGGER.info("Scrolling {} to an element with text [{}]", direction, text);
         int limit = 5;
         while (limit > 0) {
             List<WebElement> elements = driver.findElements(By.xpath("//*[@text='" + text + "']"));
@@ -399,7 +396,7 @@ public class BasePage {
     }
 
     public WebElement scrollToElementByAttributeAndValue(String attr, String value) {
-        LOGGER.info("Scrolling to an element with attribute: {} with value: {}", attr, value);
+        LOGGER.info("Scrolling to an element with attribute [{}] and value [{}]", attr, value);
         return driver.findElement(AppiumBy.androidUIAutomator(
                 "new UiScrollable(new UiSelector().scrollable(true))" +
                         ".scrollIntoView(new UiSelector()." + attr + "(\"" + value + "\"))"));
@@ -415,24 +412,23 @@ public class BasePage {
         }
     }
 
-    public boolean isElementVisible(WebElement element, Integer timeToWait) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeToWait));
-        wait.until(ExpectedConditions.visibilityOf(element));
-        return element != null;
-    }
-
-    public boolean isElementExists(WebElement element, long timeout) {
+    public boolean isElementVisible(WebElement element, long timeout) {
         try {
+            if (element == null) return false;
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeout));
             wait.until(ExpectedConditions.visibilityOf(element));
             return true;
-        } catch (NoSuchElementException | TimeoutException e) {
+        } catch (TimeoutException | NoSuchElementException e) {
             return false;
         }
     }
 
-    public AppiumDriver getDriver() {
-        return driver;
+    public boolean isElementExists(By locator, long timeout) {
+        try {
+            return Objects.nonNull(waitForVisibility(locator, timeout));
+        } catch (TimeoutException e) {
+            return false;
+        }
     }
 
     public String getDateTime() {
