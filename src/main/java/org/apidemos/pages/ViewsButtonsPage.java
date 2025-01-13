@@ -1,54 +1,72 @@
 package org.apidemos.pages;
 
-import static io.appium.java_client.AppiumBy.xpath;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apidemos.base.BasePage;
 import org.openqa.selenium.By;
 
-import java.net.URL;
-import java.util.Objects;
+import static io.appium.java_client.AppiumBy.xpath;
 
+/**
+ * Represents the Views Buttons page and provides methods to interact with its elements.
+ */
 public class ViewsButtonsPage extends BasePage {
+
+    private static final Logger LOGGER = LogManager.getLogger(ViewsButtonsPage.class);
 
     private final By normalBtn = xpath("//android.widget.Button[@text='NORMAL']");
     private final By smallBtn = xpath("//android.widget.Button[@text='SMALL']");
     private final By toggleBtn = xpath("//android.widget.ToggleButton");
 
-    //TODO Reduce image locator code
-    private final String btnOnImg = Objects.requireNonNull(
-            getClass().getClassLoader().getResource("images/btn_on.jpg"),
-            "Resource btn_on.jpg not found"
-    ).getPath();
+    private final String btnOnImg = "images/btn_on.png";
+    private final String btnOffImg = "images/btn_off.png";
 
-    private final String btnOffImg = Objects.requireNonNull(
-            getClass().getClassLoader().getResource("images/btn_off.jpg"),
-            "Resource btn_off.jpg not found"
-    ).getPath();
-
-
+    /**
+     * Clicks the toggle button on the page.
+     *
+     * @return the current instance of ViewsButtonsPage.
+     */
     public ViewsButtonsPage tapToggleButton() {
+        LOGGER.info("Clicking the toggle button.");
         click(toggleBtn);
         return this;
     }
 
+    /**
+     * Retrieves the text from the toggle button.
+     *
+     * @return the text of the toggle button.
+     */
     private String getToggleButtonText() {
-        return getText(toggleBtn);
+        String text = getText(toggleBtn);
+        LOGGER.info("Toggle button text: {}", text);
+        return text;
     }
 
+    /**
+     * Validates the state of the toggle button based on its text and image.
+     *
+     * @param state The expected state of the button ("ON" or "OFF").
+     * @return true if the state matches the expected state and image; otherwise, false.
+     */
     public boolean checkToggleButtonState(String state) {
-        URL resource = getClass().getClassLoader().getResource("btn.on.jpg");
-        System.out.println("Resource path: " + (resource != null ? resource.getPath() : "Not found"));
+        LOGGER.info("Checking toggle button state: {}", state);
 
-        switch (state) {
+        switch (state.toUpperCase()) {
             case "ON" -> {
-                return getToggleButtonText().equalsIgnoreCase("ON")
+                boolean isOn = getToggleButtonText().equalsIgnoreCase("ON")
                         && findElementByImage(btnOnImg).isDisplayed();
+                LOGGER.info("Toggle button is in ON state: {}", isOn);
+                return isOn;
             }
             case "OFF" -> {
-                return getToggleButtonText().equalsIgnoreCase("OFF")
+                boolean isOff = getToggleButtonText().equalsIgnoreCase("OFF")
                         && findElementByImage(btnOffImg).isDisplayed();
+                LOGGER.info("Toggle button is in OFF state: {}", isOff);
+                return isOff;
             }
             default -> {
+                LOGGER.error("Unsupported toggle button state: {}", state);
                 throw new IllegalArgumentException("Unsupported state: " + state);
             }
         }

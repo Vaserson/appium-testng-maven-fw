@@ -52,13 +52,17 @@ public class BaseTest {
     @AfterMethod
     public void tearDown(ITestResult result) {
         try {
-            DriverFactory.getDriver().quit();
-        } catch (Exception ignored) {}
-
-        TestUtils.getScreenshotOnFailedMethod(result.getStatus(), result.getName());
-        TestUtils.stopVideoRecording(driver, result.getStatus(), result.getName());
-        new BasePage().closeApp(PropertyUtils.getProperty("androidAppPackage"), driver);
+            if (driver != null) {
+                TestUtils.getScreenshotOnFailedMethod(result.getStatus(), result.getName());
+                TestUtils.stopVideoRecording(driver, result.getStatus(), result.getName());
+                new BasePage().closeApp(PropertyUtils.getProperty("androidAppPackage"), driver);
+                DriverFactory.quitDriver();
+            }
+        } catch (Exception e) {
+            System.err.println("Error during teardown: " + e.getMessage());
+        }
     }
+
 
     @AfterTest
     public void afterTest() {

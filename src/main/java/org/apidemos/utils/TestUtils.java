@@ -28,20 +28,23 @@ public class TestUtils {
 
     //TODO Makes 2 screenshots. Why? Because of TestListener is an additional approach
     public static void getScreenshotOnFailedMethod(int testStatus, String methodName) {
+        if (testStatus != 2) {
+            return;
+        }
         String dir = "Screenshots";
         File screenshotsDir = new File(dir);
 
         if (!screenshotsDir.exists()) {
             screenshotsDir.mkdirs();
         }
-        String imagePath = "Screenshots" + File.separator + TestUtils.getDateTime() + "_" + methodName + ".png";
-        if (testStatus == 2) {
-            try {
-                File file = DriverFactory.getDriver().getScreenshotAs(OutputType.FILE);
-                FileHandler.copy(file, new File(imagePath));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+
+        String imagePath = String.format("Screenshots%s%s_%s.png", File.separator, TestUtils.getDateTime(), methodName);
+
+        try {
+            File file = DriverFactory.getDriver().getScreenshotAs(OutputType.FILE);
+            FileHandler.copy(file, new File(imagePath));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save screenshot", e);
         }
     }
 
@@ -65,4 +68,5 @@ public class TestUtils {
             }
         }
     }
+
 }
