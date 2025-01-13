@@ -35,7 +35,6 @@ public class TouchAction {
         tap(x, y);
     }
 
-
     public void doubleTap(int x, int y) {
         Sequence doubleTap = new Sequence(finger, 0);
         for (int i = 0; i < 2; i++) {
@@ -47,7 +46,6 @@ public class TouchAction {
 
         driver.perform(List.of(doubleTap));
     }
-
 
     public void longPress(int x, int y, Duration duration) {
         PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
@@ -75,7 +73,6 @@ public class TouchAction {
         longPress(element, Duration.ofMillis(millis));
     }
 
-
     public void swipe(int startX, int startY, int endX, int endY, Duration duration) {
         Sequence swipe = new Sequence(finger, 1);
         swipe.addAction(finger.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), startX, startY))
@@ -88,7 +85,6 @@ public class TouchAction {
     public void swipe(int startX, int startY, int endX, int endY, long millis) {
         swipe(startX, startY, endX, endY, Duration.ofMillis(millis));
     }
-
 
     public void dragAndDrop(int startX, int startY, int endX, int endY, Duration duration) {
         Sequence dragAndDrop = new Sequence(finger, 0);
@@ -132,7 +128,6 @@ public class TouchAction {
         dragAndDrop(source, offsetX, offsetY, Duration.ofMillis(millis));
     }
 
-
     public void zoom(int centerX, int centerY, int distance, Duration duration) {
         PointerInput finger1 = new PointerInput(PointerInput.Kind.TOUCH, "finger1");
         PointerInput finger2 = new PointerInput(PointerInput.Kind.TOUCH, "finger2");
@@ -167,16 +162,19 @@ public class TouchAction {
         zoomOnElement(element, distance, Duration.ofMillis(millis));
     }
 
-    public void zoomFromCenter() {
+    public void zoomFromCenter(int distance) {
         int screenWidth = driver.manage().window().getSize().getWidth();
         int screenHeight = driver.manage().window().getSize().getHeight();
 
         int centerX = screenWidth / 2;
         int centerY = screenHeight / 2;
 
-        zoom(centerX, centerY, DEFAULT_DISTANCE, DEFAULT_DURATION);
+        zoom(centerX, centerY, distance, DEFAULT_DURATION);
     }
 
+    public void zoomFromCenter() {
+        zoomFromCenter(DEFAULT_DISTANCE);
+    }
 
     public void pinch(int centerX, int centerY, int distance, Duration duration) {
         PointerInput finger1 = new PointerInput(PointerInput.Kind.TOUCH, "finger1");

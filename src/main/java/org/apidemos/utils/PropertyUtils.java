@@ -2,6 +2,8 @@ package org.apidemos.utils;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apidemos.exceptions.PropertyFileUsageException;
+import org.apidemos.exceptions.XmlFileUsageException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -9,90 +11,112 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.*;
 
 public final class PropertyUtils {
-    private static final Logger logger = LogManager.getLogger(PropertyUtils.class);
+    private static final Logger LOGGER = LogManager.getLogger(PropertyUtils.class);
 
-    private static Properties property = new Properties();
-    private static final Map<String, String> CONFIGMAP = new HashMap<>();
+    private static final Properties properties = new Properties();
+    private static final Map<String, String> CONFIGMAP;
+    private static final Map<String, String> CACHE = new HashMap<>();
 
-
-    private PropertyUtils(){}
+    private PropertyUtils() {}
 
     static {
-        try {
-            FileInputStream file = new FileInputStream("src/test/resources/apiDemos.properties");
-            property.load(file);
-            for(Map.Entry<Object, Object> entry : property.entrySet()) {
-                CONFIGMAP.put(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        CONFIGMAP = loadProperties();
     }
 
-    public static HashMap<String, String> parseStringXML(InputStream file) throws Exception {
-        HashMap<String, String> stringMap = new HashMap<>();
-
-        // Get Document Builder
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-
-        // Build Document
-        Document document = builder.parse(file);
-
-        // Normalize the XML Structure. TOO IMPORTANT!
-        document.getDocumentElement().normalize();
-
-/*        // Root node
-        Element root = document.getDocumentElement(); // resources from xml
-//        System.out.println(root.getNodeName());*/
-
-        // Get all elements
-        NodeList nList = document.getElementsByTagName("string");
-        System.out.println("=====================================");
-
-        for (int i = 0; i < nList.getLength(); i++) {
-            Node node = nList.item(i);
-            System.out.println(); // separator
-            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                Element eElement = (Element) node;
-                // Store each element key value in map
-                stringMap.put(eElement.getAttribute("name"), eElement.getTextContent());
+    private static Map<String, String> loadProperties() {
+        String propertyFilePath = getConfigFilePath();
+        Map<String, String> tempConfigMap = new HashMap<>();
+        try (FileInputStream file = new FileInputStream(propertyFilePath)) {
+            properties.load(file);
+            for (String key : properties.stringPropertyNames()) {
+                tempConfigMap.put(key, properties.getProperty(key));
             }
+        } catch (Exception e) {
+            LOGGER.error("Failed to load properties file from path: [{}] with message [{}]", propertyFilePath, e.getMessage());
+            throw new PropertyFileUsageException("Unable to load configuration properties", e);
+        }
+        return Collections.unmodifiableMap(tempConfigMap);
+    }
+
+    private static String getConfigFilePath() {
+        return System.getProperty("config.file", "src/test/resources/apiDemos.properties");
+    }
+
+    /**
+     * Parses an XML file and extracts string elements into a map.
+     *
+     * @param file InputStream of the XML file.
+     * @return Map containing name-value pairs from the XML.
+     * @throws XmlFileUsageException if parsing fails.
+     */
+    public static Map<String, String> parseStringXML(InputStream file) {
+        if (file == null) {
+            throw new XmlFileUsageException("Input stream for XML file is null.");
+        }
+
+        Map<String, String> stringMap = new HashMap<>();
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document document = builder.parse(file);
+            document.getDocumentElement().normalize();
+
+            NodeList nList = document.getElementsByTagName("string");
+            for (int i = 0; i < nList.getLength(); i++) {
+                Node node = nList.item(i);
+                if (node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element eElement = (Element) node;
+                    String name = eElement.getAttribute("name");
+                    String value = eElement.getTextContent();
+                    if (name.isEmpty() || value.isEmpty()) {
+                        LOGGER.warn("Skipping empty or invalid string entry in XML: name='{}', value='{}'", name, value);
+                        continue;
+                    }
+                    if (stringMap.containsKey(name)) {
+                        LOGGER.warn("Duplicate key '{}' found in XML. Overwriting with new value '{}'.", name, value);
+                    }
+                    stringMap.put(name, value);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error parsing XML file: {}", e.getMessage());
+            throw new XmlFileUsageException("Failed to parse XML file", e);
         }
         return stringMap;
     }
 
+    /**
+     * Retrieves a property value by its key, with caching.
+     *
+     * @param key The property key.
+     * @return The property value.
+     * @throws PropertyFileUsageException if the property is not found or empty.
+     */
     public static String getProperty(String key) {
-        logger.info("Searching system property '{}'", key);
-        String property = System.getProperty(key);
-        if (Objects.isNull(property)) {
-            logger.info("No system property for '{}' is found.", key);
-            return getConfigProperty(key);
-        } else {
-            logger.info("System property for '{}' is: {}].", key, property);
-            return property;
+        if (key == null || key.isEmpty()) {
+            throw new PropertyFileUsageException("Property key cannot be null or empty.");
         }
-    }
 
-    public static String getConfigProperty(String key) {
-        logger.info("Searching property '{}' inside properties file", key);
-        String property = CONFIGMAP.get(key);
-        if (Objects.nonNull(property)) {
-            logger.info("Property for '{}' is: {}.", key, property);
-            return property;
-        } else {
-            throw new RuntimeException("No '" + key + "' property found. Please check the documentation for instructions to setting up testing data");
-        }
+        return CACHE.computeIfAbsent(key, k -> {
+            LOGGER.debug("Fetching property for key '{}'", k);
+            String value = System.getProperty(k);
+            if (Objects.nonNull(value)) {
+                LOGGER.debug("Key '{}' found in system properties with value '{}'", k, value);
+            } else {
+                LOGGER.warn("Key '{}' not found in system properties, checking config file", k);
+                value = CONFIGMAP.get(k);
+            }
+            if (Objects.nonNull(value)) {
+                LOGGER.debug("Key '{}' found in config properties with value '{}'", k, value);
+            } else {
+                throw new PropertyFileUsageException("Property '" + k + "' not found or empty. Check configuration.");
+            }
+            return value;
+        });
     }
-
 }

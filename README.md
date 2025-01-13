@@ -24,7 +24,9 @@ Take the password from the console after the first run, or reset it using the fo
 ```bash
 D:\ELK_Stack\elasticsearch-8.17.0\bin\elasticsearch-reset-password -u elastic
 ```
-
+###
+## Logstash
+#### Start Logstash
 ```bash
 D:\ELK_Stack\logstash-8.17.0\bin\logstash -f D:\ELK_Stack\logstash-8.17.0\logstash.conf
 ```

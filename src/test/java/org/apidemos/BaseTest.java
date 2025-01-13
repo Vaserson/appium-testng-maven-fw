@@ -3,6 +3,10 @@ package org.apidemos;
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.screenrecording.CanRecordScreen;
 import io.appium.java_client.service.local.AppiumDriverLocalService;
+import io.appium.java_client.service.local.AppiumServiceBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apidemos.appium.AppiumServerManager;
 import org.apidemos.base.BasePage;
 import org.apidemos.driver.DriverFactory;
 import org.apidemos.utils.PlatformUtils;
@@ -14,31 +18,46 @@ import org.testng.annotations.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Map;
 
 public class BaseTest {
-    InputStream stringsXml;
-    protected static HashMap<String, String> strings = new HashMap<>();
+    private static final Logger LOGGER = LogManager.getLogger(BaseTest.class);
+
+    protected static Map<String, String> strings = new HashMap<>();
 
     protected static AppiumDriverLocalService appiumService;
     protected static AppiumDriver driver;
 
-    @Parameters({"platformName"})
+
+    @Parameters({"platformName", "appiumHost", "appiumPort"})
     @BeforeTest
-    public void beforeTest(@Optional("ANDROID") String platformName) throws IOException {
-        //TODO Make automatic appiumService start and stop parametrized
-//        appiumService = AppiumServerManager.startAppiumService("127.0.0.1", 4723);
-        driver = DriverFactory.getDriver();
+    public void beforeTest(@Optional("ANDROID") String platformName,
+                           @Optional("127.0.0.1") String host,
+                           @Optional("4723") int port) {
         PlatformUtils.setPlatform(platformName);
-        try {
-            String xmlFileName = "strings.xml"; //TODO Move to constants
-            stringsXml = getClass().getClassLoader().getResourceAsStream(xmlFileName);
-            strings = PropertyUtils.parseStringXML(stringsXml);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
+        setupAppiumService(host, port);
+        setupDriver();
+        loadStrings(PropertyUtils.getProperty("stringsXml"));
+    }
+
+    private void setupAppiumService(String host, int port) {
+        appiumService = AppiumServerManager.startAppiumService(host, port);
+    }
+
+    private void setupDriver() {
+        driver = DriverFactory.getDriver();
+    }
+
+    private void loadStrings(String xmlFileName) {
+        try (InputStream stringsXml = getClass().getClassLoader().getResourceAsStream(xmlFileName)) {
             if (stringsXml != null) {
-                stringsXml.close();
+                strings = PropertyUtils.parseStringXML(stringsXml);
+            } else {
+                LOGGER.error("[{}] file not found", xmlFileName);
+                throw new IOException(xmlFileName + " file not found");
             }
+        } catch (Exception e) {
+            LOGGER.error("Problem with file [{}] loading", xmlFileName);
         }
     }
 
@@ -52,17 +71,26 @@ public class BaseTest {
     @AfterMethod
     public void tearDown(ITestResult result) {
         try {
-            DriverFactory.getDriver().quit();
-        } catch (Exception ignored) {}
-
-        TestUtils.getScreenshotOnFailedMethod(result.getStatus(), result.getName());
-        TestUtils.stopVideoRecording(driver, result.getStatus(), result.getName());
-        new BasePage().closeApp(PropertyUtils.getProperty("androidAppPackage"), driver);
+            if (driver != null) {
+                TestUtils.getScreenshotOnFailedMethod(result.getStatus(), result.getName());
+                TestUtils.stopVideoRecording(driver, result.getStatus(), result.getName());
+                new BasePage().closeApp(PropertyUtils.getProperty("androidAppPackage"), driver);
+                DriverFactory.quitDriver();
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error during teardown: {}", e.getMessage());
+        }
     }
+
 
     @AfterTest
     public void afterTest() {
-//        AppiumServerManager.stopAppiumService();
+        try {
+            AppiumServerManager.stopAppiumService();
+            LOGGER.info("Test execution completed. Appium service stopped.");
+        } catch (Exception e) {
+            LOGGER.error("Error while stopping Appium service: {}", e.getMessage());
+        }
     }
 
 }
