@@ -3,7 +3,6 @@ package org.apidemos.utils;
 import io.appium.java_client.screenrecording.CanRecordScreen;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apidemos.appium.AppiumServerManager;
 import org.apidemos.driver.DriverFactory;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.WebDriver;
@@ -12,9 +11,6 @@ import org.openqa.selenium.io.FileHandler;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
@@ -36,25 +32,15 @@ public class TestUtils {
         return dateFormat.format(date);
     }
 
-    private static void createDirectoryIfNotExists(String dir) {
-        Path path = Paths.get(dir);
-        if (!Files.exists(path)) {
-            try {
-                Files.createDirectories(path);
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to create directory: " + dir, e);
-            }
-        }
-    }
-
     public static void getScreenshotOnFailedMethod(int testStatus, String methodName) {
         if (testStatus != TEST_FAILED) {
             return;
         }
-        String dir = "Screenshots";
-        createDirectoryIfNotExists(dir);
-
-        String imagePath = String.format("%s%s%s_%s.png", dir, File.separator, getDateTime(), methodName);
+        String imagePath = String.format("%s%s%s_%s.png",
+                FileUtils.createDirectoryIfNotExists("Screenshots"),
+                File.separator,
+                getDateTime(),
+                methodName);
         try {
             File file = DriverFactory.getDriver().getScreenshotAs(OutputType.FILE);
             FileHandler.copy(file, new File(imagePath));
@@ -67,13 +53,12 @@ public class TestUtils {
         String media = ((CanRecordScreen) driver).stopRecordingScreen();
 
         if (testStatus == TEST_FAILED) {
-            String dir = "Videos";
-            createDirectoryIfNotExists(dir);
-
-            try (FileOutputStream stream = new FileOutputStream(new File(dir, getDateTime() + "_" + testName + ".mp4"))) {
+            try (FileOutputStream stream = new FileOutputStream(new File(
+                    FileUtils.createDirectoryIfNotExists("Videos"),
+                    getDateTime() + "_" + testName + ".mp4"))) {
                 stream.write(Base64.getDecoder().decode(media));
             } catch (IOException e) {
-                LOGGER.error("Failed to save video for test: " + testName, e);
+                LOGGER.error("Failed to save video for test: {}", testName, e);
                 throw new RuntimeException("Failed to save video", e);
             }
         }
