@@ -6,11 +6,10 @@ import io.appium.java_client.android.options.UiAutomator2Options;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apidemos.appium.AppiumServerManager;
-import org.apidemos.exceptions.FrameworkException;
 import org.apidemos.utils.PropertyUtils;
 
-import java.io.IOException;
-import java.net.*;
+import java.net.URI;
+import java.net.URL;
 
 public class DriverFactory {
     private static final Logger LOGGER = LogManager.getLogger(DriverFactory.class);

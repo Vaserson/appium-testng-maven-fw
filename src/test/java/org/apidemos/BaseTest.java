@@ -65,6 +65,7 @@ public class BaseTest {
     public void setUp() {
 //        new BasePage().closeApp(PropertyUtils.getProperty("androidAppPackage"), driver);
 //        new BasePage().openApp(PropertyUtils.getProperty("androidAppPackage"), driver);
+        //TODO Create additional method in TestUtils for startRecordingScreen
         ((CanRecordScreen) driver).startRecordingScreen();
     }
 
