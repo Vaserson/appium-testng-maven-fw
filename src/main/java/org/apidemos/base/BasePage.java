@@ -126,7 +126,6 @@ public class BasePage {
         FluentWait<AppiumDriver> fluentWait = new FluentWait<>(driver)
                 .withTimeout(Duration.ofSeconds(timeToWait))
                 .pollingEvery(Duration.ofSeconds(1));
-
         try {
             boolean isInvisible = fluentWait.until(ExpectedConditions.invisibilityOfElementLocated(locator));
             LOGGER.info("Element with locator [{}] is {}", getElementDescription(locator), isInvisible ? "invisible" : "visible");
