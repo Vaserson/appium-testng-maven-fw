@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apidemos.driver.DriverFactory;
 import org.apidemos.exceptions.*;
+import org.apidemos.utils.FileUtils;
 import org.apidemos.utils.PlatformUtils;
 import org.apidemos.utils.TestUtils;
 import org.openqa.selenium.*;
@@ -16,6 +17,9 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
@@ -71,12 +75,37 @@ public class BasePage {
         return description;
     }
 
+    public void saveElementScreenshot(By locator, WebElement element) {
+        try {
+            File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            BufferedImage fullImage = ImageIO.read(screenshot);
+
+            BufferedImage elementImage = fullImage.getSubimage(
+                    element.getRect().getX(), element.getRect().getY(),
+                    element.getRect().getWidth(), element.getRect().getHeight()
+            );
+
+            String imagePath = String.format("%s%s%s.png",
+                    FileUtils.createDirectoryIfNotExists("img_locators"), File.separator,
+                    FileUtils.sanitizeFileName(getElementDescription(locator))
+            );
+
+            File outputImage = new File(imagePath);
+
+            ImageIO.write(elementImage, "png", outputImage);
+            LOGGER.info("Saved screenshot of element [{}] to [{}]", getElementDescription(locator), imagePath);
+        } catch (IOException | NoSuchElementException e) {
+            LOGGER.error("Failed to save screenshot of element [{}]: {}", getElementDescription(locator), e.getMessage());
+        }
+    }
+
     private WebElement waitForVisibility(By locator, long timeout) {
         LOGGER.info("Waiting for an element [{}] to become visible within {} seconds", getElementDescription(locator), timeout);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeout));
         WebElement element;
         try {
             element = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+            saveElementScreenshot(locator, element);
         } catch (TimeoutException e) {
             LOGGER.error("Element [{}] was NOT found within {} seconds: \n{}", getElementDescription(locator), timeout, e.getMessage());
             throw new ElementNotFoundException("Element not found within timeout: " + locator, e);
