@@ -20,8 +20,9 @@ public class FileUtils {
             } catch (IOException e) {
                 throw new RuntimeException("Failed to create directory: " + dir, e);
             }
+        } else {
+            LOGGER.debug("Directory [{}] is already present", dir);
         }
-        LOGGER.info("Directory [{}] is already present", dir);
         return dir;
     }
 
