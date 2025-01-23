@@ -69,6 +69,7 @@ public class BasePage {
 
     private String getElementDescription(WebElement element) {
         String description = element.toString();
+        description = description.replaceAll("^\\[|]$", "");
         if (description.contains("->")) {
             return description.substring(description.indexOf("->") + 2).trim();
         }
