@@ -43,7 +43,6 @@ public final class PropertyUtils {
         return Collections.unmodifiableMap(tempConfigMap);
     }
 
-    //TODO Remove hardcoding, implement *.properties file per application
     private static String getConfigFilePath() {
         return System.getProperty("config.file", "src/test/resources/apiDemos.properties");
     }

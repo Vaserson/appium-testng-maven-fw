@@ -43,6 +43,8 @@ public class BasePage {
 
         WebElement foundElement;
 
+        //TODO Think how to return List<WebElement> sometimes
+
         if (locator.containsKey("xpath")) {
             foundElement = waitForVisibility(AppiumBy.xpath(locator.get("xpath")), timeout);
         } else if (locator.containsKey("resourceId")) {
@@ -50,7 +52,11 @@ public class BasePage {
         } else if (locator.containsKey("accessibilityId")) {
             foundElement = waitForVisibility(AppiumBy.accessibilityId(locator.get("accessibilityId")), timeout);
         } else if (locator.containsKey("text")) {
-            foundElement = waitForVisibility(AppiumBy.accessibilityId(locator.get("accessibilityId")), timeout);
+            //TODO Add more strategies (textExact, textContains, xpathDynamic)
+            //TODO Add text searching correct between different platforms (text for Android, value for iOS)
+            //TODO make getLocator to return just found String value and pass it to some findElement method (use LocatorStrategy enum)
+            //TODO Verify if next line is working correctly
+            foundElement = waitForVisibility(AppiumBy.xpath("//*[contains(@text,'" + locator.get("text")) + "')]", timeout);
         } else if (locator.containsKey("image")) {
             foundElement = findElementByImage(locator.get("image"));
         } else {

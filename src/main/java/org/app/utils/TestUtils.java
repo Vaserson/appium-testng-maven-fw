@@ -16,7 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
 
-public class TestUtils {
+public final class TestUtils {
     private static final Logger LOGGER = LogManager.getLogger(TestUtils.class);
 
     public static final long WAIT = 10;

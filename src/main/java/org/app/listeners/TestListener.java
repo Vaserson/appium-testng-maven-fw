@@ -3,6 +3,7 @@ package org.app.listeners;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.app.driver.DriverFactory;
+import org.app.utils.FileUtils;
 import org.app.utils.TestUtils;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.io.FileHandler;
@@ -26,15 +27,11 @@ public class TestListener implements ITestListener {
             result.getThrowable().printStackTrace(pw);
             System.out.println(sw);
         }
-        // Ensure the directory exists
-        File screenshotDir = new File("Screenshots");
-        if (!screenshotDir.exists()) {
-            screenshotDir.mkdirs();
-        }
 
-        String imagePath = "Screenshots" + File.separator + TestUtils.getDateTime() + "_" + result.getName() + ".png";
+        String imagePath = FileUtils.createDirectoryIfNotExists("Screenshots") + File.separator
+                + TestUtils.getDateTime() + "_" + result.getName() + ".png";
         String completeImagePath = System.getProperty("user.dir") + File.separator + imagePath;
-        LOGGER.debug("@@@ completeImagePath: {}", completeImagePath);
+        LOGGER.debug("Screenshots completeImagePath: {}", completeImagePath);
 
         try {
             File file = DriverFactory.getDriver().getScreenshotAs(OutputType.FILE);

@@ -37,7 +37,7 @@ public class BaseTest {
         PlatformUtils.setPlatform(platformName);
         setupAppiumService(host, port);
         setupDriver();
-        loadStrings(PropertyUtils.getProperty("strings.xml"));
+        loadStrings(PropertyUtils.getProperty("stringsXml"));
     }
 
     private void setupAppiumService(String host, int port) {

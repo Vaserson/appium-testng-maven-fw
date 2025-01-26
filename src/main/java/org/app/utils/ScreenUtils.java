@@ -4,7 +4,7 @@ import io.appium.java_client.AppiumDriver;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
 
-public class ScreenUtils {
+public final class ScreenUtils {
     private static Point screenCenter;
 
     public static Point getScreenCenter(AppiumDriver driver) {

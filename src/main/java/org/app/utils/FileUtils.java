@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class FileUtils {
+public final class FileUtils {
     private static final Logger LOGGER = LogManager.getLogger(FileUtils.class);
 
     public static String createDirectoryIfNotExists(String dir) {

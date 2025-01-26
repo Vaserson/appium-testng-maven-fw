@@ -3,9 +3,13 @@ package org.app.driver;
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
+import io.appium.java_client.ios.IOSDriver;
+import io.appium.java_client.ios.options.XCUITestOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.app.appium.AppiumServerManager;
+import org.app.exceptions.FrameworkException;
+import org.app.exceptions.UnsupportedPlatformException;
 import org.app.utils.PropertyUtils;
 
 import java.net.URI;
@@ -16,9 +20,10 @@ public class DriverFactory {
 
     private static AppiumDriver driver;
 
+    private static final String PLATFORM = PropertyUtils.getProperty("platform").toLowerCase();
     private static final String APP_PACKAGE = PropertyUtils.getProperty("androidAppPackage");
     private static final String APP_ACTIVITY = PropertyUtils.getProperty("androidAppActivity");
-
+    private static final String IOS_BUNDLE_ID = PropertyUtils.getProperty("iosBundleId");
 
     private static String getAppiumURL() {
         String appiumURL = AppiumServerManager.getAppiumServiceUrl();
@@ -39,22 +44,45 @@ public class DriverFactory {
                 String appiumURL = getAppiumURL();
                 URL url = new URI(appiumURL).toURL();
 
-                UiAutomator2Options options = new UiAutomator2Options()
-                        .setPlatformName("Android")
-                        .setAppPackage(APP_PACKAGE)
-                        .setAppActivity(APP_ACTIVITY)
-                        .noReset();
+                switch (PLATFORM) {
+                    case "android":
+                        driver = createAndroidDriver(url);
+                        break;
+                    case "ios":
+                        driver = createIOSDriver(url);
+                        break;
+                    default:
+                        throw new UnsupportedPlatformException("Platform not supported: " + PLATFORM);
+                }
 
-                driver = new AndroidDriver(url, options);
-                driver.setSetting("imageMatchThreshold", "0.85");
-
-                LOGGER.info("Appium Driver initialized successfully.");
+                LOGGER.info("Appium Driver initialized successfully for platform: [{}]", PLATFORM);
             } catch (Exception e) {
                 LOGGER.error("Failed to initialize Appium Driver. Error: {}", e.getMessage());
-                throw new RuntimeException("Failed to initialize Appium Driver", e);
+                throw new FrameworkException("Failed to initialize Appium Driver", e);
             }
         }
         return driver;
+    }
+
+    private static AppiumDriver createAndroidDriver(URL url) {
+        UiAutomator2Options options = new UiAutomator2Options()
+                .setPlatformName("Android")
+                .setAppPackage(APP_PACKAGE)
+                .setAppActivity(APP_ACTIVITY)
+                .noReset();
+
+        LOGGER.info("Creating Android driver with App Package: [{}] and App Activity: [{}]", APP_PACKAGE, APP_ACTIVITY);
+        return new AndroidDriver(url, options);
+    }
+
+    private static AppiumDriver createIOSDriver(URL url) {
+        XCUITestOptions options = new XCUITestOptions()
+                .setPlatformName("iOS")
+                .setBundleId(IOS_BUNDLE_ID)
+                .noReset();
+
+        LOGGER.info("Creating iOS driver with Bundle ID: [{}]", IOS_BUNDLE_ID);
+        return new IOSDriver(url, options);
     }
 
     public static void quitDriver() {

@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class LocatorUtils {
+public final class LocatorUtils {
     private static final Logger LOGGER = LogManager.getLogger(LocatorUtils.class);
 
     private static final Map<String, Map<String, Map<String, String>>> LOCATORS = new HashMap<>();
@@ -21,7 +21,7 @@ public class LocatorUtils {
     }
 
     private static void loadLocators() {
-        String LOCATORS_PATH = PropertyUtils.getProperty("locators.path");
+        String LOCATORS_PATH = PropertyUtils.getProperty("locatorsPath");
 
         ObjectMapper mapper = new ObjectMapper();
         File folder = new File(LOCATORS_PATH);
