@@ -1,0 +1,19 @@
+{
+  "locators": {
+    "API_DEMOS.VIEWS.BUTTONS.NORMAL_BUTTON": {
+      "xpath": "//android.widget.Button[@text='NORMAL']"
+    },
+    "API_DEMOS.VIEWS.BUTTONS.SMALL_BUTTON": {
+      "xpath": "//android.widget.Button[@text='SMALL']"
+    },
+    "API_DEMOS.VIEWS.BUTTONS.TOGGLE_BUTTON": {
+      "xpath": "//android.widget.ToggleButton"
+    },
+    "API_DEMOS.VIEWS.BUTTONS.ON": {
+      "image": "images/btn_on.png"
+    },
+    "API_DEMOS.VIEWS.BUTTONS.OFF": {
+      "image": "images/btn_off.png"
+    }
+  }
+}

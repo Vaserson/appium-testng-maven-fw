@@ -1,0 +1,10 @@
+{
+  "locators": {
+    "GOGO_PIZZA.SHOP.PHILADELPHIA_SALMON_ROYAL": {
+      "xpath": "//android.widget.TextView[@resource-id='live.dots.gogopizza:id/text_item_name' and @text='Філадельфия Лосось Роял']"
+    },
+    "GOGO_PIZZA.SHOP.CART_BUTTON": {
+      "xpath": "//android.widget.Button[@resource-id='live.dots.gogopizza:id/btn_cart']"
+    }
+  }
+}

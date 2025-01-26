@@ -1,0 +1,40 @@
+{
+  "locators": {
+    "API_DEMOS.ACCESS_IBILITY": {
+      "accessibilityId": "Access'ibility"
+    },
+    "API_DEMOS.ACCESSIBILITY": {
+      "accessibilityId": "Accessibility"
+    },
+    "API_DEMOS.ANIMATION": {
+      "accessibilityId": "Animation"
+    },
+    "API_DEMOS.APP": {
+      "accessibilityId": "App"
+    },
+    "API_DEMOS.CONTENT": {
+      "accessibilityId": "Content"
+    },
+    "API_DEMOS.GRAPHICS": {
+      "accessibilityId": "Graphics"
+    },
+    "API_DEMOS.MEDIA": {
+      "accessibilityId": "Media"
+    },
+    "API_DEMOS.NFC": {
+      "accessibilityId": "NFC"
+    },
+    "API_DEMOS.OS": {
+      "accessibilityId": "OS"
+    },
+    "API_DEMOS.PREFERENCE": {
+      "accessibilityId": "Preference"
+    },
+    "API_DEMOS.TEXT": {
+      "accessibilityId": "Text"
+    },
+    "API_DEMOS.VIEWS": {
+      "accessibilityId": "Views"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "locators": {
+    "GOGO_PIZZA.MENU_BTN": {
+      "resourceId": "live.dots.gogopizza:id/btn_back_toolbar"
+    },
+    "GOGO_PIZZA.MENU.ABOUT_MENU": {
+      "text": "Про сервіс"
+    },
+    "GOGO_PIZZA.MENU.ABOUT_MENU.ABOUT_TEXT": {
+      "resourceId": "live.dots.gogopizza:id/text_about"
+    }
+  }
+}

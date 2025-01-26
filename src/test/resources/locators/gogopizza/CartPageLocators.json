@@ -1,0 +1,10 @@
+{
+  "locators": {
+    "GOGO_PIZZA.SHOP.CART.EMPTY_CART_BUTTON": {
+      "resourceId": "live.dots.gogopizza:id/btn_toolbar_end"
+    },
+    "GOGO_PIZZA.SHOP.CART.EMPTY_CART_BUTTON.YES": {
+      "resourceId": "live.dots.gogopizza:id/dialog_positive_button"
+    }
+  }
+}

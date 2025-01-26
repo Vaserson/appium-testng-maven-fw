@@ -1,0 +1,7 @@
+{
+  "locators": {
+    "GOGO_PIZZA.SHOP.ITEM.ADD_BUTTON": {
+      "resourceId": "live.dots.gogopizza:id/btn_item_add"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <!-- Titles -->
+    <string name="home_title">API Demos</string>
+
+    <!-- Error Text -->
+    <string name="err_invalid_username_or_password">Sorry, the username and/or password entered is not recognized. Please try again. </string>
+
+</resources>

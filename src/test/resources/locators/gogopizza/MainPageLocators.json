@@ -1,0 +1,16 @@
+{
+  "locators": {
+    "GOGO_PIZZA.BACK_BUTTON": {
+      "resourceId": "live.dots.gogopizza:id/btn_back_toolbar"
+    },
+    "GOGO_PIZZA.MAIN.PROMOTION_IMAGE": {
+      "resourceId": "live.dots.gogopizza:id/img_promotion"
+    },
+    "GOGO_PIZZA.MAIN.PODILSKYI": {
+      "xpath": "//android.widget.TextView[@resource-id='live.dots.gogopizza:id/text_name' and contains(@text, 'Подільський')]"
+    },
+    "GOGO_PIZZA.MAIN.DARNYTSKYI": {
+      "xpath": "//android.widget.TextView[@resource-id='live.dots.gogopizza:id/text_name' and contains(@text, 'Дарницький')]"
+    }
+  }
+}

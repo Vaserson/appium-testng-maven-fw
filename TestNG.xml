@@ -5,7 +5,7 @@
         <!--Doesn't work, needs fix-->
 
         <!-- suite level for all classes. Also can be called in each test class if needed -->
-        <listener class-name="org.apidemos.listeners.TestListener"/>
+        <listener class-name="org.app.listeners.TestListener"/>
     </listeners>
 
     <test name="Android">
@@ -16,7 +16,7 @@
 
 
         <classes>
-            <class name="org.apidemos.FirstTest">
+            <class name="org.app.apidemos.FirstTest">
                 <methods>
                     <method method-name="firstTest"/>
                 </methods>
