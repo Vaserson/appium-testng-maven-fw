@@ -61,6 +61,7 @@ public class DriverFactory {
                 throw new FrameworkException("Failed to initialize Appium Driver", e);
             }
         }
+        driver.setSetting("imageMatchThreshold", "0.85");
         return driver;
     }
 

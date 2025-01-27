@@ -15,7 +15,7 @@ public class MainPage extends BasePage {
     public MainPage returnToMainPageIfNot() {
         LOGGER.info("Returning to the Main page.");
         int retry = 0;
-        while (Objects.isNull(findElement("GOGO_PIZZA.MAIN.PROMOTION_IMAGE")) || TestUtils.RETRY > retry) {
+        while (waitForElementsToBeVisible("GOGO_PIZZA.MAIN.PROMOTION_IMAGE").isEmpty() || TestUtils.RETRY > retry) {
             click("df");
             retry++;
         }

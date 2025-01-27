@@ -11,6 +11,7 @@ import org.app.driver.DriverFactory;
 import org.app.exceptions.*;
 import org.app.utils.*;
 import org.openqa.selenium.*;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -21,10 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class BasePage {
     private static final Logger LOGGER = LogManager.getLogger(BasePage.class);
@@ -38,42 +36,46 @@ public class BasePage {
     }
 
 
-    public WebElement getLocator(String key, long timeout) {
+    // ==================================
+    // Getting Locator from JSON
+    // ==================================
+    public By getLocator(String key) {
         Map<String, String> locator = LocatorUtils.getLocator(key);
-
-        WebElement foundElement;
+        By by;
 
         //TODO Think how to return List<WebElement> sometimes
 
         if (locator.containsKey("xpath")) {
-            foundElement = waitForVisibility(AppiumBy.xpath(locator.get("xpath")), timeout);
+            by = AppiumBy.xpath(locator.get("xpath"));
         } else if (locator.containsKey("resourceId")) {
-            foundElement = waitForVisibility(AppiumBy.id(locator.get("resourceId")), timeout);
+            by = AppiumBy.id(locator.get("resourceId"));
         } else if (locator.containsKey("accessibilityId")) {
-            foundElement = waitForVisibility(AppiumBy.accessibilityId(locator.get("accessibilityId")), timeout);
+            by = AppiumBy.accessibilityId(locator.get("accessibilityId"));
         } else if (locator.containsKey("text")) {
             //TODO Add more strategies (textExact, textContains, xpathDynamic)
             //TODO Add text searching correct between different platforms (text for Android, value for iOS)
             //TODO make getLocator to return just found String value and pass it to some findElement method (use LocatorStrategy enum)
             //TODO Verify if next line is working correctly
-            foundElement = waitForVisibility(AppiumBy.xpath("//*[contains(@text,'" + locator.get("text")) + "')]", timeout);
+            by = AppiumBy.xpath("//*[contains(@text,'" + locator.get("text") + "')]");
         } else if (locator.containsKey("image")) {
-            foundElement = findElementByImage(locator.get("image"));
+            by = AppiumBy.image(getReferenceImageB64(locator.get("image")));
         } else {
-            throw new RuntimeException("Unsupported locator type for key: " + key);
+            throw new UnsupportedLocatorTypeException("Unsupported locator type for key: " + key);
         }
-        saveElementScreenshot(key, foundElement);
-        return foundElement;
+        return by;
     }
 
-    public WebElement getLocator(String key) {
-        return getLocator(key, TestUtils.WAIT);
-    }
-
+    // ==================================
+    // DRIVER
+    // ==================================
     public AppiumDriver getDriver() {
         return driver;
     }
 
+
+    // ==================================
+    // Open/Close App
+    // ==================================
     public void openApp(String appPackage, WebDriver driver) {
         LOGGER.info("Opening app with package name: [{}]", appPackage);
         try {
@@ -94,6 +96,10 @@ public class BasePage {
         }
     }
 
+
+    // ==================================
+    // Getting Element description
+    // ==================================
     private String getElementDescription(String patch) {
         return patch;
     }
@@ -111,6 +117,10 @@ public class BasePage {
         return description;
     }
 
+
+    // =====================================
+    // Saving found JSON locator screenshot
+    // =====================================
     public void saveElementScreenshot(String patch, WebElement element) {
         boolean saveScreenshots = Boolean.parseBoolean(PropertyUtils.getProperty("saveElementScreenshots"));
 
@@ -144,51 +154,16 @@ public class BasePage {
         }
     }
 
-    private WebElement waitForVisibility(String patch, long timeout) {
-        LOGGER.info("Waiting for an element [{}] to become visible within {} seconds", getElementDescription(patch), timeout);
-        WebElement element;
-        try {
-            element = getLocator(patch, timeout);
-            saveElementScreenshot(patch, element);
-        } catch (TimeoutException | ElementNotFoundException e) {
-            LOGGER.error("Element [{}] was NOT found within {} seconds: \n{}", getElementDescription(patch), timeout, e.getMessage());
-            throw new ElementNotFoundException("Element not found within timeout: " + patch, e);
-        } catch (Exception e) {
-            LOGGER.error("Unexpected error while waiting for element [{}]: \n{}", getElementDescription(patch), e.getMessage());
-            throw new FrameworkException("Unexpected error while waiting for element", e);
-        }
-        LOGGER.info("Element [{}] was found", patch);
-        return element;
-    }
 
-    public boolean isElementVisible(String patch, long timeout) {
-        LOGGER.info("Waiting for an element [{}] to become visible within {} seconds", getElementDescription(patch), timeout);
-        WebElement element;
-        try {
-            element = getLocator(patch, timeout);
-            saveElementScreenshot(patch, element);
-        } catch (Exception e) {
-            LOGGER.error("Element [{}] was NOT found within {} seconds. Proceed further", getElementDescription(patch), timeout);
-            return false;
-        }
-        return true;
-    }
-
-    public boolean isElementVisible(String patch) {
-        return isElementVisible(patch, TestUtils.WAIT);
-    }
-
-    private WebElement waitForVisibility(String patch) {
-        return waitForVisibility(patch, TestUtils.WAIT);
-    }
-
-    private WebElement waitForVisibility(By locator, long timeout) {
+    // =====================================
+    // Wait for visibility of ONE elements
+    // =====================================
+    private WebElement waitForElementToBeVisible(By locator, long timeout) {
         LOGGER.info("Waiting for an element [{}] to become visible within {} seconds", getElementDescription(locator), timeout);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeout));
         WebElement element;
         try {
             element = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
-//            saveElementScreenshot(locator, element);
         } catch (TimeoutException e) {
             LOGGER.error("Element [{}] was NOT found within {} seconds: \n{}", getElementDescription(locator), timeout, e.getMessage());
             throw new ElementNotFoundException("Element not found within timeout: " + locator, e);
@@ -199,10 +174,95 @@ public class BasePage {
         return element;
     }
 
-    private WebElement waitForVisibility(By locator) {
-        return waitForVisibility(locator, TestUtils.WAIT);
+    private WebElement waitForElementToBeVisible(By locator) {
+        return waitForElementToBeVisible(locator, TestUtils.WAIT);
     }
 
+    private WebElement waitForElementToBeVisible(String patch, long timeout) {
+        LOGGER.info("Waiting for an element [{}] to become visible within {} seconds", getElementDescription(patch), timeout);
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeout));
+        WebElement element;
+        try {
+            element = wait.until(ExpectedConditions.visibilityOfElementLocated(getLocator(patch)));
+            saveElementScreenshot(patch, element);
+        } catch (TimeoutException e) {
+            LOGGER.error("Element [{}] was NOT found within {} seconds: \n{}", getElementDescription(patch), timeout, e.getMessage());
+            throw new ElementNotFoundException("Element not found within timeout: " + patch, e);
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error while waiting for element [{}]: \n{}", getElementDescription(patch), e.getMessage());
+            throw new FrameworkException("Unexpected error while waiting for element", e);
+        }
+        return element;
+    }
+
+    private WebElement waitForElementToBeVisible(String patch) {
+        return waitForElementToBeVisible(patch, TestUtils.WAIT);
+    }
+
+
+    // =====================================
+    // Wait for visibility of ALL elements
+    // =====================================
+    private List<WebElement> waitForElementsToBeVisible(By locator, long timeout) {
+        LOGGER.info("Waiting for elements [{}] to become visible within {} seconds", getElementDescription(locator), timeout);
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeout));
+        List<WebElement> elements = List.of();
+        try {
+            elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(locator));
+        } catch (TimeoutException e) {
+            LOGGER.error("Elements [{}] were NOT found within {} seconds: \n{}", getElementDescription(locator), timeout, e.getMessage());
+            return elements;
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error while waiting for elements [{}]: \n{}", getElementDescription(locator), e.getMessage());
+            return elements;
+        }
+        return elements;
+    }
+
+    public List<WebElement> waitForElementsToBeVisible(By locator) {
+        return waitForElementsToBeVisible(locator, TestUtils.WAIT);
+    }
+
+    public List<WebElement> waitForElementsToBeVisible(String patch, long timeout) {
+        LOGGER.info("Waiting for elements [{}] to become visible within {} seconds", getElementDescription(patch), timeout);
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeout));
+        List<WebElement> elements = List.of();
+        try {
+            elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(getLocator(patch)));
+
+            //TODO Should we store first or all???
+            saveElementScreenshot(patch, elements.getFirst());
+        } catch (TimeoutException e) {
+            LOGGER.error("Elements [{}] were NOT found within {} seconds: \n{}", getElementDescription(patch), timeout, e.getMessage());
+            return elements;
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error while waiting for elements [{}]: \n{}", getElementDescription(patch), e.getMessage());
+            return elements;
+        }
+        return elements;
+    }
+
+    public List<WebElement> waitForElementsToBeVisible(String patch) {
+        return waitForElementsToBeVisible(patch, TestUtils.WAIT);
+    }
+
+
+    // =====================================
+    // Verify if element VISIBLE
+    // =====================================
+    public boolean isElementVisible(String patch, long timeout) {
+        LOGGER.info("Verifying if element [{}] is visible within {} seconds", getElementDescription(patch), timeout);
+        return !waitForElementsToBeVisible(patch).isEmpty();
+    }
+
+    public boolean isElementVisible(String patch) {
+        return isElementVisible(patch, TestUtils.WAIT);
+    }
+
+
+    // =====================================
+    // Wait for INVISIBILITY
+    // =====================================
     public boolean waitForInvisibility(By locator, int timeToWait) {
         LOGGER.info("Waiting for invisibility of [{}] for {} seconds", getElementDescription(locator), timeToWait);
         FluentWait<AppiumDriver> fluentWait = new FluentWait<>(driver)
@@ -221,54 +281,52 @@ public class BasePage {
         }
     }
 
-    public WebElement findElementByText(String patch) {
-        Map<String, String> locator = LocatorUtils.getLocator(patch);
-        WebElement element = getLocator(patch);
-        LOGGER.info("Element with text [{}] was found", locator.get("text"));
-        return element;
-    }
 
+    // =====================================
+    // Find ELEMENT
+    // =====================================
     public WebElement findElementByDynamicText(String text) {
-        WebElement element = waitForVisibility(AppiumBy.xpath("//*[@text='" + text + "']"));
+        //TODO Try WebDriverWait ExpectedConditions.textToBePresentInElement
+/*        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(TestUtils.WAIT));
+        wait.until(ExpectedConditions.textToBePresentInElement(element, text));*/
+        WebElement element = waitForElementToBeVisible(AppiumBy.xpath("//*[@text='" + text + "']"));
         LOGGER.info("Element with text [{}] was found", text);
         return element;
     }
 
-    public WebElement findElement(String patch) {
-        WebElement element = getLocator(patch);
-        LOGGER.info("Element [{}] was found", getElementDescription(patch));
-        return element;
-    }
-
     public WebElement findElementByDynamicXpath(String xpath) {
-        WebElement element = waitForVisibility(AppiumBy.xpath(xpath));
+        WebElement element = waitForElementToBeVisible(AppiumBy.xpath(xpath));
         LOGGER.info("Element with XPath [{}] was found", xpath);
         return element;
     }
 
     public WebElement findElementByDynamicAccessibilityId(String accessibilityId) {
-        WebElement element = waitForVisibility(AppiumBy.accessibilityId(accessibilityId));
+        WebElement element = waitForElementToBeVisible(AppiumBy.accessibilityId(accessibilityId));
         LOGGER.info("Element with accessibility ID [{}] was found", accessibilityId);
         return element;
     }
 
-    public WebElement findElementByAccessibilityId(String patch) {
-        return waitForVisibility(patch);
-    }
 
-    public void click(String patch) {
-        LOGGER.info("Clicking element [{}]", getElementDescription(patch));
-        WebElement element = findElement(patch);
-        element.click();
-    }
-
+    // =====================================
+    // CLICK
+    // =====================================
     public void click(WebElement element) {
         LOGGER.info("Clicking element [{}]", getElementDescription(element));
         element.click();
     }
 
+    public void click(String patch, long timeout) {
+        LOGGER.info("Clicking element [{}]", getElementDescription(patch));
+        click(waitForElementToBeVisible(patch, timeout));
+    }
+
+    public void click(String patch) {
+        click(patch, TestUtils.WAIT);
+    }
+
     public void click(By locator, long timeout) {
-        WebElement element = waitForVisibility(locator, timeout);
+        LOGGER.info("Clicking element [{}]", getElementDescription(locator));
+        WebElement element = waitForElementToBeVisible(locator, timeout);
         click(element);
     }
 
@@ -292,7 +350,7 @@ public class BasePage {
 
     public void clickIfExist(By locator) {
         try {
-            WebElement element = waitForVisibility(locator, 5);
+            WebElement element = waitForElementToBeVisible(locator, 5);
             LOGGER.info("Element [{}] is visible and will be clicked", getElementDescription(locator));
             element.click();
         } catch (ElementNotFoundException e) {
@@ -324,7 +382,7 @@ public class BasePage {
             WebElement element;
 
             try {
-                element = waitForVisibility(locator); // Wait for visibility before proceeding
+                element = waitForElementToBeVisible(locator); // Wait for visibility before proceeding
                 if (element == null || !element.isDisplayed() || !element.isEnabled()) {
                     LOGGER.info("Element [{}] is not interactable after {} clicks", getElementDescription(locator), tries);
                     break;
@@ -354,21 +412,31 @@ public class BasePage {
         clickWhileExist(locator, TestUtils.RETRY);
     }
 
+
+    // =====================================
+    // Getting ATTRIBUTE
+    // =====================================
     public String getAttribute(WebElement element, String attr) {
         LOGGER.info("Getting attribute [{}] from element [{}]", attr, getElementDescription(element));
         String attribute = element.getDomAttribute(attr);
-        LOGGER.info("Attribute [{}] is [{}]", attr, attribute);
-
+        LOGGER.debug("Attribute for [{}] is [{}]", attr, attribute);
         return attribute;
     }
 
     public String getAttribute(By locator, String attr) {
-        WebElement element = waitForVisibility(locator);
-        return getAttribute(element, attr);
+        LOGGER.info("Getting attribute [{}] from element [{}]", attr, getElementDescription(locator));
+        WebElement element = waitForElementToBeVisible(locator);
+        String attribute = getAttribute(element, attr);
+        LOGGER.debug("Attribute for [{}] is [{}]", attr, attribute);
+        return attribute;
     }
 
+
+    // =====================================
+    // COORDINATES and DIMENSIONS
+    // =====================================
     public Rectangle getCoordinates(By locator) {
-        WebElement element = waitForVisibility(locator);
+        WebElement element = waitForElementToBeVisible(locator);
         LOGGER.info("Getting coordinates of element [{}]", getElementDescription(locator));
 
         int x1 = element.getRect().x;
@@ -385,21 +453,35 @@ public class BasePage {
     }
 
     public void getCoordinatesAndClick(By locator) {
-        touchAction.tap(waitForVisibility(locator));
+        touchAction.tap(waitForElementToBeVisible(locator));
     }
 
+    private Dimension getScreenSize() {
+        Dimension dimension = driver.manage().window().getSize();
+        LOGGER.info("Getting screen dimensions [{}]", dimension);
+        return driver.manage().window().getSize();
+    }
+
+
+    // =====================================
+    // Send KEYS
+    // =====================================
     public void clear(By locator) {
-        WebElement element = waitForVisibility(locator);
+        WebElement element = waitForElementToBeVisible(locator);
         LOGGER.info("Clearing element [{}]", getElementDescription(locator));
         element.clear();
     }
 
     public void sendKeys(By locator, String txt) {
-        WebElement element = waitForVisibility(locator);
+        WebElement element = waitForElementToBeVisible(locator);
         LOGGER.info("Sending keys: [{}] to element [{}]", txt, getElementDescription(locator));
         element.sendKeys(txt);
     }
 
+
+    // =====================================
+    // Getting TEXT
+    // =====================================
     public String getText(By locator) {
         LOGGER.info("Getting text attribute of element [{}]", getElementDescription(locator));
         String platform = PlatformUtils.getPlatform();
@@ -420,6 +502,10 @@ public class BasePage {
         };
     }
 
+
+    // =====================================
+    // SCROLL
+    // =====================================
     public void scroll(String direction) {
         LOGGER.info("Scroll screen {}", direction);
         scroll(direction, "scroll", 1);
@@ -431,13 +517,13 @@ public class BasePage {
 
         while (attempt < TestUtils.RETRY) {
             try {
-                WebElement element = waitForVisibility(locator);
+                WebElement element = waitForElementToBeVisible(locator);
                 if (element.isDisplayed() || element.isEnabled()) {
                     break;
                 }
             } catch (NoSuchElementException e1) {
                 try {
-                    WebElement anotherElement = waitForVisibility(anotherLocator);
+                    WebElement anotherElement = waitForElementToBeVisible(anotherLocator);
                     if (anotherElement.isDisplayed() || anotherElement.isEnabled()) {
                         throw new NoElementOnAllowedPartException("No element: " + getElementDescription(locator) + " was found while scrolling and the examination element is reached");
                     }
@@ -517,7 +603,7 @@ public class BasePage {
         int retry = 0;
         while (retry < TestUtils.RETRY) {
             try {
-                WebElement element = waitForVisibility(patch);
+                WebElement element = waitForElementToBeVisible(patch);
                 if (element.isDisplayed()) {
                     LOGGER.info("Element [{}] found after {} scroll attempts", getElementDescription(patch), retry + 1);
                     return element;
@@ -536,7 +622,7 @@ public class BasePage {
         int retry = 0;
         while (retry < retries) {
             try {
-                WebElement element = waitForVisibility(patch, 0);
+                WebElement element = waitForElementToBeVisible(patch, 0);
                 if (element.isDisplayed()) {
                     LOGGER.info("Element [{}] found after {} scroll attempts", getElementDescription(patch), retry + 1);
                     return element;
@@ -555,7 +641,7 @@ public class BasePage {
         int retry = 0;
         while (retry < TestUtils.RETRY) {
             try {
-                WebElement element = waitForVisibility(locator);
+                WebElement element = waitForElementToBeVisible(locator);
                 if (element.isDisplayed()) {
                     LOGGER.info("Element with locator [{}] found after {} scroll attempts", locator, retry + 1);
                     return element;
@@ -595,6 +681,19 @@ public class BasePage {
         }
     }
 
+
+    // =====================================
+    // Drag and Drop
+    // =====================================
+    public void dragFromPointToPoint(int xStart, int yStart, int xFinish, int yFinish) {
+        LOGGER.info("Drag from point [{},{}] to point [{},{}]", xStart, yStart, xFinish, yFinish);
+        touchAction.dragAndDrop(xStart, yStart, xFinish, yFinish, 1000L);
+    }
+
+
+    // =====================================
+    // WAIT
+    // =====================================
     public void waitInSeconds(int seconds) {
         LOGGER.info("Waiting for {} seconds", seconds);
         try {
@@ -605,16 +704,19 @@ public class BasePage {
         }
     }
 
+
+    // =====================================
+    // Date and Time
+    // =====================================
     public String getDateTime() {
         LOGGER.info("Got date and time [{}]", (dateTime = TestUtils.getDateTime()));
         return dateTime;
     }
 
-    public void dragFromPointToPoint(int xStart, int yStart, int xFinish, int yFinish) {
-        LOGGER.info("Drag from point [{},{}] to point [{},{}]", xStart, yStart, xFinish, yFinish);
-        touchAction.dragAndDrop(xStart, yStart, xFinish, yFinish, 1000L);
-    }
 
+    // =====================================
+    // Manage mobile NOTIFICATION CENTER
+    // =====================================
     public void manageNotifications(boolean show) {
         Dimension screenSize = getScreenSize();
         int yTop = 3;
@@ -630,46 +732,35 @@ public class BasePage {
         }
     }
 
-    private Dimension getScreenSize() {
-        Dimension dimension = driver.manage().window().getSize();
-        LOGGER.info("Getting screen dimensions [{}]", dimension);
-        return driver.manage().window().getSize();
-    }
 
+    // =====================================
+    // Press physical BUTTONS
+    // =====================================
     public void pressAndroidButton(AndroidKey androidKey) {
         LOGGER.info("Pressing Android key [{}]", androidKey);
         ((AndroidDriver) driver).pressKey(new KeyEvent(androidKey));
     }
 
 
+    // ==================================
     // IMAGE LOCATOR
-    private String getReferenceImageB64(String imagePath) throws IOException {
-        LOGGER.info("Getting reference image in path [{}]", imagePath);
-
-        InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(imagePath);
-
-        if (resourceStream == null) {
-            LOGGER.error("Resource not found [{}]", imagePath);
-            throw new ImageFileNotFoundException("Resource not found: " + imagePath);
-        }
-
-        byte[] imageBytes = resourceStream.readAllBytes();
-        resourceStream.close();
-
-        return Base64.getEncoder().encodeToString(imageBytes);
-    }
-
-    public WebElement findElementByImage(String imagePath) {
+    // ==================================
+    public WebElement findElementByImage(String patch) {
         String base64Image;
+        Map<String, String> locator;
         try {
-            base64Image = getReferenceImageB64(imagePath);
-        } catch (IOException e) {
-            LOGGER.error("Image locator file was not found: [{}]", imagePath);
-            throw new RuntimeException("Image locator file not found: " + imagePath, e);
+            locator = LocatorUtils.getLocator(patch);
+            if (locator.containsKey("image")) {
+                patch = locator.get("image");
+            }
+        } catch (JsonLocatorNotFoundException e) {
+            LOGGER.error("JSON locator [{}] was not found. Trying to use directly as an image path", patch);
         }
+        base64Image = getReferenceImageB64(patch);
+
         By imageLocator = AppiumBy.image(base64Image);
 
-        LOGGER.info("Looking for an element by image [{}] for default {} seconds", imagePath, TestUtils.WAIT);
+        LOGGER.info("Looking for an element by image [{}] for default {} seconds", patch, TestUtils.WAIT);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(TestUtils.WAIT));
 
         WebElement element = null;
@@ -677,7 +768,7 @@ public class BasePage {
             element = wait.until(ExpectedConditions.presenceOfElementLocated(imageLocator));
 
         } catch (TimeoutException e) {
-            LOGGER.error("Element [{}] was not found within the timeout", imagePath);
+            LOGGER.error("Element [{}] was not found within the timeout", patch);
         }
         if (Objects.nonNull(element)) {
             LOGGER.debug("isDisplayed: {}", element.isDisplayed()); // true}
@@ -690,5 +781,25 @@ public class BasePage {
         }
 
         return element;
+    }
+
+    private String getReferenceImageB64(String imagePath) {
+        LOGGER.info("Getting reference image in path [{}]", imagePath);
+
+        InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(imagePath);
+
+        if (resourceStream == null) {
+            LOGGER.error("Resource not found [{}]", imagePath);
+            throw new ImageFileNotFoundException("Resource not found: " + imagePath);
+        }
+        byte[] imageBytes;
+        try {
+            imageBytes = resourceStream.readAllBytes();
+            resourceStream.close();
+        } catch (IOException e) {
+            throw new ImageFileNotFoundException("Problem occurred while reading an image file in path: " + imagePath);
+        }
+
+        return Base64.getEncoder().encodeToString(imageBytes);
     }
 }

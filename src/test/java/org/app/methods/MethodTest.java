@@ -84,7 +84,7 @@ public class MethodTest extends BaseTest{
         basePage.pressAndroidButton(AndroidKey.BACK);
         LOGGER.info("--------------------------------");
         LOGGER.info("click(locator, 5)");
-        basePage.click(basePage.getLocator("API_DEMOS.NFC", 5));
+        basePage.click(basePage.getLocator("API_DEMOS.NFC"), 5);
         basePage.pressAndroidButton(AndroidKey.BACK);
         LOGGER.info("--------------------------------");
         LOGGER.info("findElementByDynamicText(\"NFC\")");
