@@ -44,7 +44,7 @@ public final class PropertyUtils {
     }
 
     private static String getConfigFilePath() {
-        return System.getProperty("config.file", "src/test/resources/apiDemos.properties");
+        return System.getProperty("config.file", "src/test/resources/properties/apiDemos.properties");
     }
 
     /**

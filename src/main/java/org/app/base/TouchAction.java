@@ -9,6 +9,7 @@ import org.openqa.selenium.interactions.Sequence;
 import java.time.Duration;
 import java.util.List;
 
+//TODO Add logging to the methods
 public class TouchAction {
     private final AppiumDriver driver;
     private final PointerInput finger;

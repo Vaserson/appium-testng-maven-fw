@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.app.exceptions.JsonLocatorNotFoundException;
+import org.app.exceptions.JsonLocatorKeyMissingException;
 
 import java.io.File;
 import java.util.HashMap;
@@ -54,15 +54,13 @@ public final class LocatorUtils {
      * @return the map of locator details (e.g., xpath, id).
      */
     public static Map<String, String> getLocator(String key) {
-        for (Map.Entry<String, Map<String, Map<String, String>>> fileEntry : LOCATORS.entrySet()) {
-            Map<String, Map<String, String>> fileLocators = fileEntry.getValue();
-            if (fileLocators.containsKey(key)) {
-                Map<String, String> foundLocator = fileLocators.get(key);
-                LOGGER.error("Locator for key [{}] is: {}", key, foundLocator);
-                return foundLocator;
-            }
-        }
-        LOGGER.error("Locator not found: {}", key);
-        throw new JsonLocatorNotFoundException("Locator not found: " + key);
+        return LOCATORS.values().stream()
+                .map(fileLocators -> fileLocators.get(key))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElseThrow(() -> {
+                    LOGGER.error("Locator not found: {}", key);
+                    return new JsonLocatorKeyMissingException("Locator not found: " + key);
+                });
     }
 }

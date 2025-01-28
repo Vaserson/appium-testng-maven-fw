@@ -24,12 +24,16 @@ public class MethodTest extends BaseTest{
         By textField4 = AppiumBy.xpath("(//android.widget.EditText)[4]");
         By textField5 = AppiumBy.xpath("(//android.widget.EditText)[5]");
 
-/*        System.out.println(strings.get("home_title"));
+
+        System.out.println(basePage.findElementsByImage("API_DEMOS.A_IMAGE"));
+
+ /*
+*//*        System.out.println(strings.get("home_title"));
         basePage.click(viewsMenu);
         basePage.findElementByDynamicText("NONE");
-*/
+*//*
 
-/*
+*//*
 
         System.out.println(ScreenUtils.getScreenCenter(driver));
         basePage.dragFromPointToPoint(500,2000,500,500);
@@ -37,10 +41,10 @@ public class MethodTest extends BaseTest{
         basePage.manageNotifications(true);
         basePage.waitInSeconds(2);
         basePage.manageNotifications(false);
-*/
+*//*
 
 
-        basePage.click(basePage.getLocator("API_DEMOS.VIEWS"));
+        basePage.click("API_DEMOS.VIEWS");
         basePage.scrollToElementByText("TextFields", "Down");
 
         LOGGER.info("--------------------------------");
@@ -80,11 +84,11 @@ public class MethodTest extends BaseTest{
 
         LOGGER.info("--------------------------------");
         LOGGER.info("click(locator)");
-        basePage.click(basePage.getLocator("API_DEMOS.NFC"));
+        basePage.click("API_DEMOS.NFC");
         basePage.pressAndroidButton(AndroidKey.BACK);
         LOGGER.info("--------------------------------");
         LOGGER.info("click(locator, 5)");
-        basePage.click(basePage.getLocator("API_DEMOS.NFC"), 5);
+        basePage.click("API_DEMOS.NFC", 5);
         basePage.pressAndroidButton(AndroidKey.BACK);
         LOGGER.info("--------------------------------");
         LOGGER.info("findElementByDynamicText(\"NFC\")");
@@ -119,7 +123,7 @@ public class MethodTest extends BaseTest{
         LOGGER.info("clickWhileExist(//*[@text='API Demos']");
         basePage.clickWhileExist(AppiumBy.xpath("//*[@text='API Demos']"), 10);
 
-/*
+*//*
         basePage.waitForInvisibility(locator, 5);
 
         basePage.findElementByDynamicXpath("//*[@text='NFC']");

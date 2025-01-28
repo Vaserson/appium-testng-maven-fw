@@ -1,6 +1,7 @@
 package org.app.driver;
 
 import io.appium.java_client.AppiumDriver;
+import io.appium.java_client.Setting;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
 import io.appium.java_client.ios.IOSDriver;
@@ -61,7 +62,7 @@ public class DriverFactory {
                 throw new FrameworkException("Failed to initialize Appium Driver", e);
             }
         }
-        driver.setSetting("imageMatchThreshold", "0.85");
+        driver.setSetting(Setting.IMAGE_MATCH_THRESHOLD, "0.85");
         return driver;
     }
 

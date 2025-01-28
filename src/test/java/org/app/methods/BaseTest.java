@@ -33,7 +33,7 @@ public class BaseTest {
     public void beforeTest(@Optional("ANDROID") String platformName,
                            @Optional("127.0.0.1") String host,
                            @Optional("4723") int port) {
-        System.setProperty("config.file", "src/test/resources/apidemos.properties");
+        System.setProperty("config.file", "src/test/resources/properties/apiDemos.properties");
         PlatformUtils.setPlatform(platformName);
         setupAppiumService(host, port);
         setupDriver();

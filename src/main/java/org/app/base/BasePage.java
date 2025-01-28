@@ -5,6 +5,7 @@ import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.nativekey.AndroidKey;
 import io.appium.java_client.android.nativekey.KeyEvent;
+import io.appium.java_client.ios.IOSDriver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.app.driver.DriverFactory;
@@ -39,31 +40,54 @@ public class BasePage {
     // ==================================
     // Getting Locator from JSON
     // ==================================
-    public By getLocator(String key) {
-        Map<String, String> locator = LocatorUtils.getLocator(key);
-        By by;
-
-        //TODO Think how to return List<WebElement> sometimes
-
-        if (locator.containsKey("xpath")) {
-            by = AppiumBy.xpath(locator.get("xpath"));
-        } else if (locator.containsKey("resourceId")) {
-            by = AppiumBy.id(locator.get("resourceId"));
-        } else if (locator.containsKey("accessibilityId")) {
-            by = AppiumBy.accessibilityId(locator.get("accessibilityId"));
-        } else if (locator.containsKey("text")) {
-            //TODO Add more strategies (textExact, textContains, xpathDynamic)
-            //TODO Add text searching correct between different platforms (text for Android, value for iOS)
-            //TODO make getLocator to return just found String value and pass it to some findElement method (use LocatorStrategy enum)
-            //TODO Verify if next line is working correctly
-            by = AppiumBy.xpath("//*[contains(@text,'" + locator.get("text") + "')]");
-        } else if (locator.containsKey("image")) {
-            by = AppiumBy.image(getReferenceImageB64(locator.get("image")));
-        } else {
-            throw new UnsupportedLocatorTypeException("Unsupported locator type for key: " + key);
+    //TODO Think how to return List<WebElement> sometimes
+    //TODO Add more strategies (textExact, textContains, xpathDynamic)
+    //TODO Add text searching correct between different platforms (text for Android, value for iOS)
+    //TODO make getLocator to return just found String value and pass it to some findElement method (use LocatorStrategy enum)
+    //TODO Verify if next line is working correctly
+    public By getLocator(Map<String, String> locator) {
+        if (locator == null || locator.isEmpty()) {
+            throw new JsonLocatorKeyMissingException("Locator map cannot be null or empty.");
         }
-        return by;
+        return locator.entrySet().stream()
+                .map(entry -> switch (entry.getKey()) {
+                    case "xpath" -> AppiumBy.xpath(entry.getValue());
+                    case "resourceId" -> AppiumBy.id(entry.getValue());
+                    case "accessibilityId" -> AppiumBy.accessibilityId(entry.getValue());
+                    case "text" -> AppiumBy.xpath("//*[contains(@text,'" + entry.getValue() + "')]");
+                    case "image" -> AppiumBy.image(getReferenceImageB64(entry.getValue()));
+                    default -> throw new UnsupportedLocatorTypeException("Unsupported locator type for key: " + entry.getKey());
+                })
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No valid locator key found for: " + locator.keySet()));
     }
+
+    public Point getCoordinates(Map<String, String> locator) {
+        if (locator == null || locator.isEmpty()) {
+            throw new JsonLocatorKeyMissingException("Locator map cannot be null or empty.");
+        }
+
+        if (!locator.containsKey("coordinates")) {
+            throw new IllegalArgumentException("No coordinate key found in the locator map.");
+        }
+
+        String coordinates = locator.get("coordinates");
+        String[] parts = coordinates.split(",");
+
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Invalid coordinates format. Expected 'x,y' but got: " + coordinates);
+        }
+
+        try {
+            int x = Integer.parseInt(parts[0].trim());
+            int y = Integer.parseInt(parts[1].trim());
+            return new Point(x, y);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Coordinates must be integers: " + coordinates, e);
+        }
+    }
+
+
 
     // ==================================
     // DRIVER
@@ -79,7 +103,11 @@ public class BasePage {
     public void openApp(String appPackage, WebDriver driver) {
         LOGGER.info("Opening app with package name: [{}]", appPackage);
         try {
-            ((AndroidDriver) driver).activateApp(appPackage);
+            if (PlatformUtils.isAndroid()) {
+                ((AndroidDriver) driver).activateApp(appPackage);
+            } else if (PlatformUtils.isIOS()) {
+                ((IOSDriver) driver).activateApp(appPackage);
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to open app with package: [{}]", appPackage);
             throw new AppNotFoundException("App could not be opened: " + appPackage, e);
@@ -156,7 +184,7 @@ public class BasePage {
 
 
     // =====================================
-    // Wait for visibility of ONE elements
+    // Wait for visibility of ONE element
     // =====================================
     private WebElement waitForElementToBeVisible(By locator, long timeout) {
         LOGGER.info("Waiting for an element [{}] to become visible within {} seconds", getElementDescription(locator), timeout);
@@ -183,7 +211,7 @@ public class BasePage {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeout));
         WebElement element;
         try {
-            element = wait.until(ExpectedConditions.visibilityOfElementLocated(getLocator(patch)));
+            element = wait.until(ExpectedConditions.visibilityOfElementLocated(getLocator(LocatorUtils.getLocator(patch))));
             saveElementScreenshot(patch, element);
         } catch (TimeoutException e) {
             LOGGER.error("Element [{}] was NOT found within {} seconds: \n{}", getElementDescription(patch), timeout, e.getMessage());
@@ -228,7 +256,7 @@ public class BasePage {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeout));
         List<WebElement> elements = List.of();
         try {
-            elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(getLocator(patch)));
+            elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(getLocator(LocatorUtils.getLocator(patch))));
 
             //TODO Should we store first or all???
             saveElementScreenshot(patch, elements.getFirst());
@@ -283,7 +311,43 @@ public class BasePage {
 
 
     // =====================================
-    // Find ELEMENT
+    // Find ELEMENT by PATCH
+    // =====================================
+    public WebElement findElement(String patch) {
+        Map<String, String> locator = (LocatorUtils.getLocator(patch));
+        if (locator.containsKey("image")) {
+            return findElementByImage(locator.get("image"));
+        }
+        return findElementByLocator(locator);
+    }
+
+    private WebElement findElementByLocator(Map<String, String> locator) {
+        if (locator == null || locator.isEmpty()) {
+            throw new IllegalArgumentException("Locator map cannot be null or empty.");
+        }
+        By by = getLocator(locator);
+        return waitForElementToBeVisible(by);
+    }
+
+    public List<WebElement> findElements(String patch) {
+        Map<String, String> locator = LocatorUtils.getLocator(patch);
+        if (locator.containsKey("image")) {
+            return findElementsByImage(patch);
+        }
+        return findAllElementsByLocator(locator);
+    }
+
+    private List<WebElement> findAllElementsByLocator(Map<String, String> locator) {
+        if (locator == null || locator.isEmpty()) {
+            throw new IllegalArgumentException("Locator map cannot be null or empty.");
+        }
+        By by = getLocator(locator);
+        return waitForElementsToBeVisible(by);
+    }
+
+
+    // =====================================
+    // Find ELEMENT common
     // =====================================
     public WebElement findElementByDynamicText(String text) {
         //TODO Try WebDriverWait ExpectedConditions.textToBePresentInElement
@@ -482,24 +546,38 @@ public class BasePage {
     // =====================================
     // Getting TEXT
     // =====================================
+    public String getText(String patch) {
+        LOGGER.info("Getting text attribute of element [{}]", patch);
+        Map<String, String> locator = LocatorUtils.getLocator(patch);
+        By by = getLocator(locator);
+        WebElement element = waitForElementToBeVisible(by);
+        return getPlatformSpecificAttribute(element);
+    }
+
     public String getText(By locator) {
         LOGGER.info("Getting text attribute of element [{}]", getElementDescription(locator));
-        String platform = PlatformUtils.getPlatform();
-        return switch (platform) {
-            case "ANDROID" -> getAttribute(locator, "text");
-            case "IOS" -> getAttribute(locator, "label");
-            default -> throw new IllegalStateException("Unsupported platform: " + platform);
-        };
+        WebElement element = waitForElementToBeVisible(locator);
+        return getPlatformSpecificAttribute(element);
     }
 
     public String getText(WebElement element) {
         LOGGER.info("Getting text attribute of element [{}]", getElementDescription(element));
-        String platform = PlatformUtils.getPlatform();
-        return switch (platform) {
-            case "ANDROID" -> getAttribute(element, "text");
-            case "IOS" -> getAttribute(element, "label");
-            default -> throw new IllegalStateException("Unsupported platform: " + platform);
+        return getPlatformSpecificAttribute(element);
+    }
+
+    /**
+     * Retrieves the platform-specific text attribute from the element.
+     * @param element WebElement whose attribute needs to be fetched
+     * @return text value for Android or iOS
+     */
+    private String getPlatformSpecificAttribute(WebElement element) {
+        PlatformUtils.PlatformType platform = PlatformUtils.getPlatform();
+        String attributeName = switch (platform) {
+            case ANDROID -> "text";
+            case IOS -> "label";
+            default -> throw new IllegalStateException("Unsupported platform: " + platform.name());
         };
+        return getAttribute(element, attributeName);
     }
 
 
@@ -685,9 +763,9 @@ public class BasePage {
     // =====================================
     // Drag and Drop
     // =====================================
-    public void dragFromPointToPoint(int xStart, int yStart, int xFinish, int yFinish) {
+    public void dragFromPointToPoint(int xStart, int yStart, int xFinish, int yFinish, long durationMs) {
         LOGGER.info("Drag from point [{},{}] to point [{},{}]", xStart, yStart, xFinish, yFinish);
-        touchAction.dragAndDrop(xStart, yStart, xFinish, yFinish, 1000L);
+        touchAction.dragAndDrop(xStart, yStart, xFinish, yFinish, durationMs);
     }
 
 
@@ -725,10 +803,10 @@ public class BasePage {
 
         if (show) {
             LOGGER.info("Showing notifications");
-            dragFromPointToPoint(xMid, yTop, xMid, yBottom);
+            dragFromPointToPoint(xMid, yTop, xMid, yBottom, 100L);
         } else {
             LOGGER.info("Hiding notifications");
-            dragFromPointToPoint(xMid, yBottom, xMid, yTop);
+            dragFromPointToPoint(xMid, yBottom, xMid, yTop, 100L);
         }
     }
 
@@ -746,6 +824,11 @@ public class BasePage {
     // IMAGE LOCATOR
     // ==================================
     public WebElement findElementByImage(String patch) {
+        List<WebElement> elements = findElementsByImage(patch);
+        return elements.stream().findFirst().orElse(null);
+    }
+
+    public List<WebElement> findElementsByImage(String patch) {
         String base64Image;
         Map<String, String> locator;
         try {
@@ -753,35 +836,36 @@ public class BasePage {
             if (locator.containsKey("image")) {
                 patch = locator.get("image");
             }
-        } catch (JsonLocatorNotFoundException e) {
+        } catch (JsonLocatorKeyMissingException e) {
             LOGGER.error("JSON locator [{}] was not found. Trying to use directly as an image path", patch);
         }
+
         base64Image = getReferenceImageB64(patch);
 
         By imageLocator = AppiumBy.image(base64Image);
 
-        LOGGER.info("Looking for an element by image [{}] for default {} seconds", patch, TestUtils.WAIT);
+        LOGGER.info("Looking for elements by image [{}] for default {} seconds", patch, TestUtils.WAIT);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(TestUtils.WAIT));
 
-        WebElement element = null;
+        List<WebElement> elements = new ArrayList<>();
         try {
-            element = wait.until(ExpectedConditions.presenceOfElementLocated(imageLocator));
-
+            List<WebElement> foundElements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(imageLocator));
+            elements.addAll(foundElements);
         } catch (TimeoutException e) {
-            LOGGER.error("Element [{}] was not found within the timeout", patch);
-        }
-        if (Objects.nonNull(element)) {
-            LOGGER.debug("isDisplayed: {}", element.isDisplayed()); // true}
-            LOGGER.debug("getSize: {}", element.getSize()); // (71, 69)
-            LOGGER.debug("getLocation: {}", element.getLocation()); // (300, 1528)
-            LOGGER.debug("getAttribute visual: {}", getAttribute(element, "visual"));
-            LOGGER.debug("getAttribute score: {}", getAttribute(element, "score"));
-            //visual returns matched image as base64 data if getMatchedImageResult is true
-            //score returns the similarity score as a float number in range [0.0, 1.0] since Appium 1.18.0
+            LOGGER.error("Elements [{}] were not found within the timeout", patch);
         }
 
-        return element;
+        if (!elements.isEmpty()) {
+            for (WebElement element : elements) {
+                LOGGER.debug("Element size: {}", element.getSize());
+                LOGGER.debug("Element location: {}", element.getLocation());
+                LOGGER.debug("Element attribute 'visual': {}", getAttribute(element, "visual"));
+                LOGGER.debug("Element attribute 'score': {}", getAttribute(element, "score"));
+            }
+        }
+        return elements;
     }
+
 
     private String getReferenceImageB64(String imagePath) {
         LOGGER.info("Getting reference image in path [{}]", imagePath);
@@ -802,4 +886,15 @@ public class BasePage {
 
         return Base64.getEncoder().encodeToString(imageBytes);
     }
+
+    //TODO Image caching
+/*    private final Map<String, String> imageCache = new ConcurrentHashMap<>();
+
+    private String getReferenceImageB64(String imagePath) {
+        return imageCache.computeIfAbsent(imagePath, this::convertToBase64);
+    }
+
+    private String convertToBase64(String imagePath) {
+        // Logic to read and encode image as base64
+    }*/
 }

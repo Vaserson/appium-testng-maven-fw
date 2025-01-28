@@ -7,28 +7,69 @@ import org.app.enums.Platform;
 import java.util.Objects;
 
 public final class PlatformUtils {
+
     private static final Logger LOGGER = LogManager.getLogger(PlatformUtils.class);
 
-    private static String platform = Platform.ANDROID.name();
+    // Enum for platform types
+    public enum PlatformType {
+        ANDROID, IOS, UNKNOWN
+    }
+
+    private static PlatformType platform = PlatformType.ANDROID; // Default platform
 
     private PlatformUtils() {}
 
-
-    public static String getPlatform () {
-        LOGGER.info("Current Platform is [{}]", platform);
-        return platform.toUpperCase();
+    /**
+     * Retrieves the current platform.
+     * @return the current PlatformType
+     */
+    public static PlatformType getPlatform() {
+        LOGGER.info("Current Platform is [{}]", platform.name());
+        return platform;
     }
 
-    public static void setPlatform (String platformName) {
-        if (Objects.nonNull(platformName)) {
-            platform = platformName.toUpperCase();
-            LOGGER.info("Set Platform [{}]", platformName);
-        } else if (Objects.nonNull(PropertyUtils.getProperty("platformName"))) {
-            platform = PropertyUtils.getProperty("platformName");
-            LOGGER.info("Set Platform from properties [{}]", platform);
+    /**
+     * Sets the platform based on user input or property values.
+     * @param platformName platform name string (e.g., "android" or "ios")
+     */
+    public static void setPlatform(String platformName) {
+        if (Objects.nonNull(platformName) && !platformName.trim().isEmpty()) {
+            platform = parsePlatformType(platformName);
         } else {
-            LOGGER.info("Set Platform to default [{}]", platform);
+            String propertyPlatform = PropertyUtils.getProperty("platformName");
+            platform = propertyPlatform != null ? parsePlatformType(propertyPlatform) : PlatformType.ANDROID;
+        }
+        LOGGER.info("Platform set to [{}]", platform.name());
+    }
+
+    /**
+     * Checks if the current platform is Android.
+     * @return true if Android, false otherwise
+     */
+    public static boolean isAndroid() {
+        return platform == PlatformType.ANDROID;
+    }
+
+    /**
+     * Checks if the current platform is iOS.
+     * @return true if iOS, false otherwise
+     */
+    public static boolean isIOS() {
+        return platform == PlatformType.IOS;
+    }
+
+    /**
+     * Converts a string to the corresponding PlatformType.
+     * Defaults to UNKNOWN for invalid values.
+     * @param platformName platform name as a string
+     * @return PlatformType enum value
+     */
+    private static PlatformType parsePlatformType(String platformName) {
+        try {
+            return PlatformType.valueOf(platformName.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            LOGGER.warn("Invalid platform name [{}]. Defaulting to UNKNOWN.", platformName);
+            return PlatformType.UNKNOWN;
         }
     }
-
 }
