@@ -40,7 +40,7 @@ public class MethodTest extends BaseTest{
 */
 
 
-        basePage.click(basePage.getLocator("API_DEMOS.VIEWS"));
+        basePage.click("API_DEMOS.VIEWS");
         basePage.scrollToElementByText("TextFields", "Down");
 
         LOGGER.info("--------------------------------");
@@ -80,11 +80,11 @@ public class MethodTest extends BaseTest{
 
         LOGGER.info("--------------------------------");
         LOGGER.info("click(locator)");
-        basePage.click(basePage.getLocator("API_DEMOS.NFC"));
+        basePage.click("API_DEMOS.NFC");
         basePage.pressAndroidButton(AndroidKey.BACK);
         LOGGER.info("--------------------------------");
         LOGGER.info("click(locator, 5)");
-        basePage.click(basePage.getLocator("API_DEMOS.NFC"), 5);
+        basePage.click("API_DEMOS.NFC", 5);
         basePage.pressAndroidButton(AndroidKey.BACK);
         LOGGER.info("--------------------------------");
         LOGGER.info("findElementByDynamicText(\"NFC\")");

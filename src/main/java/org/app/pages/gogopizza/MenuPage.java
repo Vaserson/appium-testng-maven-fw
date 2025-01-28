@@ -12,18 +12,18 @@ public class MenuPage extends BasePage {
 
     public MenuPage openMenu() {
         LOGGER.info("Clicking the menu button.");
-        click(getLocator("GOGO_PIZZA.MENU_BTN"));
+        click("GOGO_PIZZA.MENU_BTN");
         return this;
     }
 
     public MenuPage openMenuAbout() {
         LOGGER.info("Clicking the About menu.");
-        click(getLocator("GOGO_PIZZA.MENU.ABOUT_MENU"));
+        click("GOGO_PIZZA.MENU.ABOUT_MENU");
         return this;
     }
 
     public String getAboutText() {
-        String text = getText(getLocator("GOGO_PIZZA.MENU.ABOUT_MENU.ABOUT_TEXT"));
+        String text = getText("GOGO_PIZZA.MENU.ABOUT_MENU.ABOUT_TEXT");
         LOGGER.info("About text is [{}]", text);
         return text;
     }

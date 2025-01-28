@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.app.exceptions.JsonLocatorNotFoundException;
+import org.app.exceptions.JsonLocatorKeyMissingException;
 
 import java.io.File;
 import java.util.HashMap;
@@ -63,6 +63,6 @@ public final class LocatorUtils {
             }
         }
         LOGGER.error("Locator not found: {}", key);
-        throw new JsonLocatorNotFoundException("Locator not found: " + key);
+        throw new JsonLocatorKeyMissingException("Locator not found: " + key);
     }
 }
