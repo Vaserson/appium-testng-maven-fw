@@ -2,7 +2,6 @@ package org.app.apidemos;
 
 import org.app.base.BasePage;
 import org.app.pages.apidemos.MenuPage;
-import org.app.pages.apidemos.ViewsButtonsPage;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 

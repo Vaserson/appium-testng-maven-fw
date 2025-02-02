@@ -2,8 +2,11 @@ package org.app.pages.apidemos;
 
 import io.appium.java_client.android.nativekey.AndroidKey;
 import org.app.base.BasePage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MenuPage extends BasePage {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MenuPage.class);
 
     public MenuPage openMenu(String menuName) {
         click(findElementByDynamicAccessibilityId(menuName));

@@ -1,15 +1,12 @@
 package org.app.pages.gogopizza;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.app.base.BasePage;
-import org.app.utils.TestUtils;
-
-import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class ShopPage extends BasePage {
-    private static final Logger LOGGER = LogManager.getLogger(ShopPage.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShopPage.class);
 
 
     public ShopPage swipeToProduct() {

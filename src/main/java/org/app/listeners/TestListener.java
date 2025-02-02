@@ -1,12 +1,12 @@
 package org.app.listeners;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.app.driver.DriverFactory;
 import org.app.utils.FileUtils;
 import org.app.utils.TestUtils;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.io.FileHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
 import org.testng.Reporter;
@@ -17,7 +17,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public class TestListener implements ITestListener {
-    private static final Logger LOGGER = LogManager.getLogger(TestListener.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestListener.class);
 
     // Use and customize testng.ITestListener method
     public void onTestFailure(ITestResult result) {

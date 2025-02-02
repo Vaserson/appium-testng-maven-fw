@@ -1,7 +1,7 @@
 package org.app.utils;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class FileUtils {
-    private static final Logger LOGGER = LogManager.getLogger(FileUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileUtils.class);
 
     public static String createDirectoryIfNotExists(String dir) {
         Path path = Paths.get(dir);
@@ -20,8 +20,6 @@ public final class FileUtils {
             } catch (IOException e) {
                 throw new RuntimeException("Failed to create directory: " + dir, e);
             }
-        } else {
-            LOGGER.debug("Directory [{}] is already present", dir);
         }
         return dir;
     }

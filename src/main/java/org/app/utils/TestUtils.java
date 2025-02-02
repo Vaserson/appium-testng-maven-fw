@@ -1,12 +1,12 @@
 package org.app.utils;
 
 import io.appium.java_client.screenrecording.CanRecordScreen;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.app.driver.DriverFactory;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.io.FileHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -17,7 +17,7 @@ import java.util.Base64;
 import java.util.Date;
 
 public final class TestUtils {
-    private static final Logger LOGGER = LogManager.getLogger(TestUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestUtils.class);
 
     public static final long WAIT = 10;
     public static final int RETRY = 6;

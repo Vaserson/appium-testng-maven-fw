@@ -6,18 +6,18 @@ import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
 import io.appium.java_client.ios.IOSDriver;
 import io.appium.java_client.ios.options.XCUITestOptions;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.app.appium.AppiumServerManager;
 import org.app.exceptions.FrameworkException;
 import org.app.exceptions.UnsupportedPlatformException;
 import org.app.utils.PropertyUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URL;
 
 public class DriverFactory {
-    private static final Logger LOGGER = LogManager.getLogger(DriverFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DriverFactory.class);
 
     private static AppiumDriver driver;
 

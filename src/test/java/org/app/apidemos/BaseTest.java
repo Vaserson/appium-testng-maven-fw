@@ -3,14 +3,14 @@ package org.app.apidemos;
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.screenrecording.CanRecordScreen;
 import io.appium.java_client.service.local.AppiumDriverLocalService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.app.appium.AppiumServerManager;
 import org.app.base.BasePage;
 import org.app.driver.DriverFactory;
 import org.app.utils.PlatformUtils;
 import org.app.utils.PropertyUtils;
 import org.app.utils.TestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.ITestResult;
 import org.testng.annotations.*;
 
@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class BaseTest {
-    private static final Logger LOGGER = LogManager.getLogger(BaseTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BaseTest.class);
 
     protected static Map<String, String> strings = new HashMap<>();
 

@@ -2,9 +2,9 @@ package org.app.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.app.exceptions.JsonLocatorKeyMissingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public final class LocatorUtils {
-    private static final Logger LOGGER = LogManager.getLogger(LocatorUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocatorUtils.class);
 
     private static final Map<String, Map<String, Map<String, String>>> LOCATORS = new HashMap<>();
 

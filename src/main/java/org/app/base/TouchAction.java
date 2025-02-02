@@ -5,12 +5,16 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Pause;
 import org.openqa.selenium.interactions.PointerInput;
 import org.openqa.selenium.interactions.Sequence;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.List;
 
 //TODO Add logging to the methods
 public class TouchAction {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TouchAction.class);
+
     private final AppiumDriver driver;
     private final PointerInput finger;
 

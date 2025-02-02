@@ -1,14 +1,12 @@
 package org.app.utils;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.app.enums.Platform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
 public final class PlatformUtils {
-
-    private static final Logger LOGGER = LogManager.getLogger(PlatformUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PlatformUtils.class);
 
     // Enum for platform types
     public enum PlatformType {
