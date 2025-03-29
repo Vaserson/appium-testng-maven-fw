@@ -1,4 +1,4 @@
-package org.app.apidemos;
+package org.app.multidriver;
 
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.screenrecording.CanRecordScreen;
@@ -9,6 +9,7 @@ import org.app.driver.DriverFactory;
 import org.app.utils.PlatformUtils;
 import org.app.utils.PropertyUtils;
 import org.app.utils.TestUtils;
+import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.ITestResult;
@@ -26,6 +27,8 @@ public class BaseTest {
 
     protected static AppiumDriverLocalService appiumService;
     protected static AppiumDriver mobileNativeDriver;
+    protected static AppiumDriver mobileChromeDriver;
+    protected static WebDriver desktopChromeDriver;
 
 
     @Parameters({"platformName", "appiumHost", "appiumPort"})
@@ -36,17 +39,11 @@ public class BaseTest {
         System.setProperty("config.file", "src/test/resources/properties/apiDemos.properties");
         PlatformUtils.setPlatform(platformName);
         setupAppiumService(host, port);
-        setupDriver();
         loadStrings(PropertyUtils.getProperty("stringsXml"));
-        new BasePage(mobileNativeDriver).openApp(PropertyUtils.getProperty("androidAppPackage"));
     }
 
     private void setupAppiumService(String host, int port) {
         appiumService = AppiumServerManager.startAppiumService(host, port);
-    }
-
-    private void setupDriver() {
-        mobileNativeDriver = DriverFactory.getAndroidNativeAppDriver();
     }
 
     private void loadStrings(String xmlFileName) {
@@ -64,23 +61,21 @@ public class BaseTest {
 
     @BeforeMethod
     public void setUp() {
-//        new BasePage().closeApp(PropertyUtils.getProperty("androidAppPackage"), driver);
-//        new BasePage().openApp(PropertyUtils.getProperty("androidAppPackage"), driver);
         //TODO Create additional method in TestUtils for startRecordingScreen
-        ((CanRecordScreen) mobileNativeDriver).startRecordingScreen();
+//        ((CanRecordScreen) mobileNativeDriver).startRecordingScreen();
     }
 
     @AfterMethod
     public void tearDown(ITestResult result) {
         try {
             if (mobileNativeDriver != null) {
-                TestUtils.getScreenshotOnFailedMethod(mobileNativeDriver, result.getStatus(), result.getName());
-                TestUtils.stopVideoRecording(mobileNativeDriver, result.getStatus(), result.getName());
-                new BasePage(mobileNativeDriver).closeApp(PropertyUtils.getProperty("androidAppPackage"));
+//                TestUtils.getScreenshotOnFailedMethod(result.getStatus(), result.getName());
+//                TestUtils.stopVideoRecording(mobileNativeDriver, result.getStatus(), result.getName());
+//                new BasePage().closeApp(PropertyUtils.getProperty("androidAppPackage"), mobileNativeDriver);
                 DriverFactory.quitAllDrivers();
             }
         } catch (Exception e) {
-            LOGGER.error("Error during teardown: {}", e.getMessage());
+            LOGGER.error("Error during tear down: {}", e.getMessage());
         }
     }
 

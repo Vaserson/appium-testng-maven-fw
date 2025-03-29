@@ -30,12 +30,11 @@ import java.util.Map;
 public class BasePage {
     private static final Logger LOGGER = LoggerFactory.getLogger(BasePage.class);
     protected static String dateTime;
-    protected AppiumDriver driver;
+    protected WebDriver driver;
     protected TouchAction touchAction;
 
-    public BasePage() {
-        this.driver = DriverFactory.getDriver();
-        this.touchAction = new TouchAction(driver);
+    public BasePage(WebDriver driver) {
+        this.driver = driver;
     }
 
 
@@ -90,19 +89,10 @@ public class BasePage {
     }
 
 
-
-    // ==================================
-    // DRIVER
-    // ==================================
-    public AppiumDriver getDriver() {
-        return driver;
-    }
-
-
     // ==================================
     // Open/Close App
     // ==================================
-    public void openApp(String appPackage, WebDriver driver) {
+    public void openApp(String appPackage) {
         LOGGER.info("Opening app with package name: [{}]", appPackage);
         try {
             if (PlatformUtils.isAndroid()) {
@@ -116,10 +106,14 @@ public class BasePage {
         }
     }
 
-    public void closeApp(String appPackage, WebDriver driver) {
+    public void closeApp(String appPackage) {
         LOGGER.info("Closing app with package name: [{}]", appPackage);
         try {
-            ((AndroidDriver) driver).terminateApp(appPackage);
+            if (PlatformUtils.isAndroid()) {
+                ((AndroidDriver) driver).terminateApp(appPackage);
+            } else if (PlatformUtils.isIOS()) {
+                ((IOSDriver) driver).terminateApp(appPackage);
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to close app with package: [{}]", appPackage);
             throw new AppNotFoundException("App could not be closed: " + appPackage, e);
@@ -295,7 +289,7 @@ public class BasePage {
     // =====================================
     public boolean waitForInvisibility(By locator, int timeToWait) {
         LOGGER.info("Waiting for invisibility of [{}] for {} seconds", getElementDescription(locator), timeToWait);
-        FluentWait<AppiumDriver> fluentWait = new FluentWait<>(driver)
+        FluentWait<AppiumDriver> fluentWait = new FluentWait<>((AppiumDriver)driver)
                 .withTimeout(Duration.ofSeconds(timeToWait))
                 .pollingEvery(Duration.ofSeconds(1));
         try {

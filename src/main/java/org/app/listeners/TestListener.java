@@ -33,14 +33,14 @@ public class TestListener implements ITestListener {
         String completeImagePath = System.getProperty("user.dir") + File.separator + imagePath;
         LOGGER.debug("Screenshots completeImagePath: {}", completeImagePath);
 
-        try {
-            File file = DriverFactory.getDriver().getScreenshotAs(OutputType.FILE);
-            FileHandler.copy(file, new File(imagePath));
-            Reporter.log("Screenshot of the failed method");
-            Reporter.log("<a href='"+ completeImagePath + "'> <img src='" + completeImagePath + "' height='1000' width='400'/> </a>");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+////            File file = DriverFactory.getDriver().getScreenshotAs(OutputType.FILE);
+////            FileHandler.copy(file, new File(imagePath));
+////            Reporter.log("Screenshot of the failed method");
+////            Reporter.log("<a href='"+ completeImagePath + "'> <img src='" + completeImagePath + "' height='1000' width='400'/> </a>");
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
 }

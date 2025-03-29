@@ -11,7 +11,7 @@ public class FirstTest extends BaseTest{
 
     @Test
     public void firstLevelMenuTest() {
-        new MenuPage()
+        new MenuPage(mobileNativeDriver)
                 .openAccess_ibilityMenu().clickBackButton()
                 .openAccessibilityMenu().clickBackButton()
                 .openAnimationMenu().clickBackButton()
@@ -28,13 +28,13 @@ public class FirstTest extends BaseTest{
 
     @Test
     public void firstTest() {
-        new MenuPage()
+        new MenuPage(mobileNativeDriver)
                 .openMenu("Views")
                 .openMenu("Buttons");
 
         SoftAssert softAssert = new SoftAssert();
 
-        BasePage basePage = new BasePage();
+        BasePage basePage = new BasePage(mobileNativeDriver);
         basePage.click("API_DEMOS.VIEWS.BUTTONS.NORMAL_BUTTON");
         basePage.click("API_DEMOS.VIEWS.BUTTONS.SMALL_BUTTON");
         softAssert.assertTrue(basePage.isElementVisible("API_DEMOS.VIEWS.BUTTONS.OFF"));

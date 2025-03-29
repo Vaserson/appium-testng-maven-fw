@@ -38,6 +38,7 @@ public class BaseTest {
         setupAppiumService(host, port);
         setupDriver();
         loadStrings(PropertyUtils.getProperty("stringsXml"));
+        new BasePage(driver).openApp(PropertyUtils.getProperty("androidAppPackage"));
     }
 
     private void setupAppiumService(String host, int port) {
@@ -45,7 +46,7 @@ public class BaseTest {
     }
 
     private void setupDriver() {
-        driver = DriverFactory.getDriver();
+        driver = DriverFactory.getAndroidNativeAppDriver();
     }
 
     private void loadStrings(String xmlFileName) {
@@ -73,10 +74,10 @@ public class BaseTest {
     public void tearDown(ITestResult result) {
         try {
             if (driver != null) {
-                TestUtils.getScreenshotOnFailedMethod(result.getStatus(), result.getName());
+                TestUtils.getScreenshotOnFailedMethod(driver, result.getStatus(), result.getName());
                 TestUtils.stopVideoRecording(driver, result.getStatus(), result.getName());
-                new BasePage().closeApp(PropertyUtils.getProperty("androidAppPackage"), driver);
-                DriverFactory.quitDriver();
+                new BasePage(driver).closeApp(PropertyUtils.getProperty("androidAppPackage"));
+                DriverFactory.quitAllDrivers();
             }
         } catch (Exception e) {
             LOGGER.error("Error during teardown: {}", e.getMessage());

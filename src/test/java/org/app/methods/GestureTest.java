@@ -12,7 +12,7 @@ public class GestureTest extends BaseTest {
 
         TouchAction touchAction = new TouchAction(driver);
 
-        BasePage basePage = new BasePage();
+        BasePage basePage = new BasePage(driver);
         basePage.waitInSeconds(4);
         basePage.scroll("down", "scroll", 1);
         basePage.waitInSeconds(2);

@@ -1,7 +1,9 @@
 package org.app.pages.apidemos;
 
+import io.appium.java_client.AppiumDriver;
 import org.app.base.BasePage;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +21,10 @@ public class ViewsButtonsPage extends BasePage {
 
     private final String btnOnImg = "images/btn_on.png";
     private final String btnOffImg = "images/btn_off.png";
+
+    public ViewsButtonsPage(AppiumDriver driver) {
+        super(driver);
+    }
 
     /**
      * Clicks the toggle button on the page.

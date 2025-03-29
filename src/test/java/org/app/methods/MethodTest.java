@@ -12,7 +12,7 @@ public class MethodTest extends BaseTest{
 
     @Test
     public void methodTest() {
-        BasePage basePage = new BasePage();
+        BasePage basePage = new BasePage(driver);
         By locator = AppiumBy.xpath("//*[@text='NFC']");
         By viewsMenu = AppiumBy.xpath("//*[@text='Views']");
         By textFieldsMenu = AppiumBy.xpath("//*[@text='TextFields']");

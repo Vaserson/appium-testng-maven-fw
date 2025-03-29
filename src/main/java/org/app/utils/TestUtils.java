@@ -1,5 +1,6 @@
 package org.app.utils;
 
+import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.screenrecording.CanRecordScreen;
 import org.app.driver.DriverFactory;
 import org.openqa.selenium.OutputType;
@@ -32,7 +33,7 @@ public final class TestUtils {
         return dateFormat.format(date);
     }
 
-    public static void getScreenshotOnFailedMethod(int testStatus, String methodName) {
+    public static void getScreenshotOnFailedMethod(WebDriver driver, int testStatus, String methodName) {
         if (testStatus != TEST_FAILED) {
             return;
         }
@@ -42,7 +43,7 @@ public final class TestUtils {
                 getDateTime(),
                 methodName);
         try {
-            File file = DriverFactory.getDriver().getScreenshotAs(OutputType.FILE);
+            File file = ((AppiumDriver)driver).getScreenshotAs(OutputType.FILE);
             FileHandler.copy(file, new File(imagePath));
         } catch (IOException e) {
             throw new RuntimeException("Failed to save screenshot", e);
