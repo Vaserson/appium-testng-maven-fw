@@ -1,0 +1,10 @@
+{
+  "locators": {
+    "NEWS_LINK": {
+      "linkText": "Новини"
+    },
+    "FAQ_LINK": {
+      "linkText": "FAQ"
+    }
+  }
+}

@@ -6,7 +6,7 @@ import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.nativekey.AndroidKey;
 import io.appium.java_client.android.nativekey.KeyEvent;
 import io.appium.java_client.ios.IOSDriver;
-import org.app.driver.DriverFactory;
+import org.app.enums.Platform;
 import org.app.exceptions.*;
 import org.app.utils.*;
 import org.openqa.selenium.*;
@@ -31,7 +31,6 @@ public class BasePage {
     private static final Logger LOGGER = LoggerFactory.getLogger(BasePage.class);
     protected static String dateTime;
     protected WebDriver driver;
-    protected TouchAction touchAction;
 
     public BasePage(WebDriver driver) {
         this.driver = driver;
@@ -50,17 +49,40 @@ public class BasePage {
         if (locator == null || locator.isEmpty()) {
             throw new JsonLocatorKeyMissingException("Locator map cannot be null or empty.");
         }
-        return locator.entrySet().stream()
-                .map(entry -> switch (entry.getKey()) {
-                    case "xpath" -> AppiumBy.xpath(entry.getValue());
-                    case "resourceId" -> AppiumBy.id(entry.getValue());
-                    case "accessibilityId" -> AppiumBy.accessibilityId(entry.getValue());
-                    case "text" -> AppiumBy.xpath("//*[contains(@text,'" + entry.getValue() + "')]");
-                    case "image" -> AppiumBy.image(getReferenceImageB64(entry.getValue()));
-                    default -> throw new UnsupportedLocatorTypeException("Unsupported locator type for key: " + entry.getKey());
-                })
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No valid locator key found for: " + locator.keySet()));
+        if (Platform.WEB == PlatformUtils.getPlatform()) {
+            return locator.entrySet().stream()
+                    .map(entry -> switch (entry.getKey()) {
+                        case "xpath" -> By.xpath(entry.getValue());
+                        case "id" -> By.id(entry.getValue());
+                        case "name" -> By.name(entry.getValue());
+                        case "className" -> By.className(entry.getValue());
+                        case "css" -> By.cssSelector(entry.getValue());
+                        case "linkText" -> By.linkText(entry.getValue());
+                        case "partialLinkText" -> By.partialLinkText(entry.getValue());
+                        case "tagName" -> By.tagName(entry.getValue());
+                        default -> throw new UnsupportedLocatorTypeException("Unsupported locator type for key: " + entry.getKey());
+                    })
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("No valid locator key found for: " + locator.keySet()));
+        } else {
+            return locator.entrySet().stream()
+                    .map(entry -> switch (entry.getKey()) {
+                        case "xpath" -> AppiumBy.xpath(entry.getValue());
+                        case "accessibilityId" -> AppiumBy.accessibilityId(entry.getValue());
+                        case "text" -> AppiumBy.xpath("//*[contains(@"+ getPlatformSpecificTextAttribute() +",'" + entry.getValue() + "')]");
+                        case "image" -> AppiumBy.image(getReferenceImageB64(entry.getValue()));
+                        // ANDROID
+                        case "resourceId", "id" -> AppiumBy.id(entry.getValue());
+                        case "androidUIAutomator" -> AppiumBy.androidUIAutomator(entry.getValue());
+                        // IOS
+                        case "iosPredicate" -> AppiumBy.iOSNsPredicateString(entry.getValue());
+                        case "iosClassChain" -> AppiumBy.iOSClassChain(entry.getValue());
+                        default ->
+                                throw new UnsupportedLocatorTypeException("Unsupported locator type for key: " + entry.getKey());
+                    })
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("No valid locator key found for: " + locator.keySet()));
+        }
     }
 
     public Point getCoordinates(Map<String, String> locator) {
@@ -124,11 +146,11 @@ public class BasePage {
     // ==================================
     // Getting Element description
     // ==================================
-    private String getElementDescription(String patch) {
+    protected String getElementDescription(String patch) {
         return patch;
     }
 
-    private String getElementDescription(By locator) {
+    protected String getElementDescription(By locator) {
         return locator.toString().replace("By.", "");
     }
 
@@ -198,11 +220,11 @@ public class BasePage {
         return element;
     }
 
-    private WebElement waitForElementToBeVisible(By locator) {
+    protected WebElement waitForElementToBeVisible(By locator) {
         return waitForElementToBeVisible(locator, TestUtils.WAIT);
     }
 
-    private WebElement waitForElementToBeVisible(String patch, long timeout) {
+    protected WebElement waitForElementToBeVisible(String patch, long timeout) {
         LOGGER.info("Waiting for an element [{}] to become visible within {} seconds", getElementDescription(patch), timeout);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeout));
         WebElement element;
@@ -219,7 +241,7 @@ public class BasePage {
         return element;
     }
 
-    private WebElement waitForElementToBeVisible(String patch) {
+    protected WebElement waitForElementToBeVisible(String patch) {
         return waitForElementToBeVisible(patch, TestUtils.WAIT);
     }
 
@@ -512,11 +534,7 @@ public class BasePage {
         return new Rectangle(x1, y1, height, width);
     }
 
-    public void getCoordinatesAndClick(By locator) {
-        touchAction.tap(waitForElementToBeVisible(locator));
-    }
-
-    private Dimension getScreenSize() {
+    protected Dimension getScreenSize() {
         Dimension dimension = driver.manage().window().getSize();
         LOGGER.info("Getting screen dimensions [{}]", dimension);
         return driver.manage().window().getSize();
@@ -547,18 +565,18 @@ public class BasePage {
         Map<String, String> locator = LocatorUtils.getLocator(patch);
         By by = getLocator(locator);
         WebElement element = waitForElementToBeVisible(by);
-        return getPlatformSpecificAttribute(element);
+        return getPlatformSpecificTextAttributeValue(element);
     }
 
     public String getText(By locator) {
         LOGGER.info("Getting text attribute of element [{}]", getElementDescription(locator));
         WebElement element = waitForElementToBeVisible(locator);
-        return getPlatformSpecificAttribute(element);
+        return getPlatformSpecificTextAttributeValue(element);
     }
 
     public String getText(WebElement element) {
         LOGGER.info("Getting text attribute of element [{}]", getElementDescription(element));
-        return getPlatformSpecificAttribute(element);
+        return getPlatformSpecificTextAttributeValue(element);
     }
 
     /**
@@ -566,202 +584,17 @@ public class BasePage {
      * @param element WebElement whose attribute needs to be fetched
      * @return text value for Android or iOS
      */
-    private String getPlatformSpecificAttribute(WebElement element) {
-        PlatformUtils.PlatformType platform = PlatformUtils.getPlatform();
-        String attributeName = switch (platform) {
-            case ANDROID -> "text";
+    private String getPlatformSpecificTextAttributeValue(WebElement element) {
+        return getAttribute(element, getPlatformSpecificTextAttribute());
+    }
+
+    private String getPlatformSpecificTextAttribute() {
+        Platform platform = PlatformUtils.getPlatform();
+        return switch (platform) {
+            case ANDROID,WEB -> "text";
             case IOS -> "label";
             default -> throw new IllegalStateException("Unsupported platform: " + platform.name());
         };
-        return getAttribute(element, attributeName);
-    }
-
-
-    // =====================================
-    // SCROLL
-    // =====================================
-    public void scroll(String direction) {
-        LOGGER.info("Scroll screen {}", direction);
-        scroll(direction, "scroll", 1);
-    }
-
-    public void scrollToElementWhileAnotherElement(By locator, By anotherLocator, String direction) {
-        LOGGER.info("Scrolling {} to element [{}] while another element [{}]", direction, getElementDescription(locator), getElementDescription(anotherLocator));
-        int attempt = 0;
-
-        while (attempt < TestUtils.RETRY) {
-            try {
-                WebElement element = waitForElementToBeVisible(locator);
-                if (element.isDisplayed() || element.isEnabled()) {
-                    break;
-                }
-            } catch (NoSuchElementException e1) {
-                try {
-                    WebElement anotherElement = waitForElementToBeVisible(anotherLocator);
-                    if (anotherElement.isDisplayed() || anotherElement.isEnabled()) {
-                        throw new NoElementOnAllowedPartException("No element: " + getElementDescription(locator) + " was found while scrolling and the examination element is reached");
-                    }
-                } catch (NoSuchElementException e2) {
-                    String beforeSwipe = driver.getPageSource();
-                    scroll(direction);
-                    waitInSeconds(4);
-                    String afterSwipe = driver.getPageSource();
-                    if (beforeSwipe.equals(afterSwipe)) {
-                        throw new EndOfPageException("No element: " + locator + " was found while scrolling and the end of the page is reached");
-                    }
-                    attempt++;
-                    LOGGER.info("Attempts left: {}", TestUtils.RETRY - attempt);
-                }
-            }
-        }
-    }
-
-    public void scroll(String direction, String type, int repeater) {
-        LOGGER.info("{} screen {} {} times", type, direction, repeater);
-        Dimension dim = driver.manage().window().getSize();
-        int startX;
-        int startY;
-        int endX;
-        int endY;
-        Duration duration = Duration.ofMillis(700);
-
-        if (direction.equalsIgnoreCase("up")) {
-            startX = dim.getWidth() / 2;
-            endX = dim.getWidth() / 2;
-            startY = (int) (dim.getHeight() * 0.2);
-            endY = (int) (dim.getHeight() * 0.8);
-        } else if (direction.equalsIgnoreCase("down")) {
-            startX = dim.getWidth() / 2;
-            endX = dim.getWidth() / 2;
-            startY = (int) (dim.getHeight() * 0.8);
-            endY = (int) (dim.getHeight() * 0.2);
-        } else if (direction.equalsIgnoreCase("left")) {
-            startX = (int) (dim.getWidth() * 0.2);
-            endX = (int) (dim.getWidth() * 0.8);
-            startY = dim.getHeight() / 2;
-            endY = dim.getHeight() / 2;
-        } else if (direction.equalsIgnoreCase("right")) {
-            startX = (int) (dim.getWidth() * 0.8);
-            endX = (int) (dim.getWidth() * 0.2);
-            startY = dim.getHeight() / 2;
-            endY = dim.getHeight() / 2;
-        } else {
-            throw new IllegalArgumentException();
-        }
-
-        switch (type) {
-            case ("scroll") -> {
-            }
-            case ("swipe") -> {
-                int temp = startX;
-                startX = endX;
-                endX = temp;
-                duration = Duration.ofMillis(400);
-            }
-            case ("flick") -> {
-                int temp = startX;
-                startX = endX;
-                endX = temp;
-                duration = Duration.ofMillis(100);
-            }
-            default -> throw new IllegalArgumentException("Unsupported type: " + type);
-        }
-
-        for (int i = 0; i < repeater; i++) {
-            touchAction.swipe(startX, startY, endX, endY, duration);
-        }
-    }
-
-    public WebElement scrollToElement(String patch, String direction) {
-        LOGGER.info("Attempting to scroll {} to an element [{}]", direction, getElementDescription(patch));
-        int retry = 0;
-        while (retry < TestUtils.RETRY) {
-            try {
-                WebElement element = waitForElementToBeVisible(patch);
-                if (element.isDisplayed()) {
-                    LOGGER.info("Element [{}] found after {} scroll attempts", getElementDescription(patch), retry + 1);
-                    return element;
-                }
-            } catch (NoSuchElementException | ElementNotFoundException | TimeoutException e) {
-                LOGGER.info("Element [{}] was not found on attempt {}/{}. Retrying scroll...", getElementDescription(patch), retry + 1, TestUtils.RETRY);
-                scroll(direction);
-                retry++;
-            }
-        }
-        throw new SwipeLimitExceededException("Element w: " + getElementDescription(patch) + " was not found after " + TestUtils.RETRY + " attempts.");
-    }
-
-    public WebElement scrollToElement(String patch, String direction, int retries) {
-        LOGGER.info("Attempting to scroll {} to an element [{}]", direction, getElementDescription(patch));
-        int retry = 0;
-        while (retry < retries) {
-            try {
-                WebElement element = waitForElementToBeVisible(patch, 0);
-                if (element.isDisplayed()) {
-                    LOGGER.info("Element [{}] found after {} scroll attempts", getElementDescription(patch), retry + 1);
-                    return element;
-                }
-            } catch (NoSuchElementException | ElementNotFoundException | TimeoutException e) {
-                LOGGER.info("Element [{}] was not found on attempt {}/{}. Retrying scroll...", getElementDescription(patch), retry + 1, retries);
-                scroll(direction);
-                retry++;
-            }
-        }
-        throw new SwipeLimitExceededException("Element w: " + getElementDescription(patch) + " was not found after " + TestUtils.RETRY + " attempts.");
-    }
-
-    public WebElement scrollToElement(By locator, String direction) {
-        LOGGER.info("Attempting to scroll {} to an element with locator [{}]", direction, locator);
-        int retry = 0;
-        while (retry < TestUtils.RETRY) {
-            try {
-                WebElement element = waitForElementToBeVisible(locator);
-                if (element.isDisplayed()) {
-                    LOGGER.info("Element with locator [{}] found after {} scroll attempts", locator, retry + 1);
-                    return element;
-                }
-            } catch (NoSuchElementException e) {
-                LOGGER.info("Element with locator [{}] not found on attempt {}/{}. Retrying scroll...", locator, retry + 1, TestUtils.RETRY);
-                scroll(direction);
-                retry++;
-            }
-        }
-        throw new SwipeLimitExceededException("Element with locator: " + getElementDescription(locator) + " was not found after " + TestUtils.RETRY + " attempts.");
-    }
-
-    public WebElement scrollToElementByText(String text, String direction) {
-        LOGGER.info("Scrolling {} to an element with text [{}]", direction, text);
-        int retry = 0;
-        while (retry < TestUtils.RETRY) {
-            List<WebElement> elements = driver.findElements(By.xpath("//*[@text='" + text + "']"));
-            if (!elements.isEmpty()) {
-                return elements.getFirst();
-            }
-            scroll(direction);
-            retry++;
-        }
-        throw new SwipeLimitExceededException("No element with text [" + text + "] was found while swiping retry limit was reached");
-    }
-
-    public WebElement scrollToElementByAttributeAndValue(String attr, String value) {
-        LOGGER.info("Scrolling to an element with attribute [{}] and value [{}]", attr, value);
-        try {
-            return driver.findElement(AppiumBy.androidUIAutomator(
-                    "new UiScrollable(new UiSelector().scrollable(true))" +
-                            ".scrollIntoView(new UiSelector()." + attr + "(\"" + value + "\"))"));
-        } catch (NoSuchElementException e) {
-            LOGGER.error("Element with attribute [{}] and value [{}] not found after scrolling", attr, value);
-            throw new EndOfPageException("No attribute [" + attr + "] with value [" + value + "] was found while the end of the page is reached");
-        }
-    }
-
-
-    // =====================================
-    // Drag and Drop
-    // =====================================
-    public void dragFromPointToPoint(int xStart, int yStart, int xFinish, int yFinish, long durationMs) {
-        LOGGER.info("Drag from point [{},{}] to point [{},{}]", xStart, yStart, xFinish, yFinish);
-        touchAction.dragAndDrop(xStart, yStart, xFinish, yFinish, durationMs);
     }
 
 
@@ -785,34 +618,6 @@ public class BasePage {
     public String getDateTime() {
         LOGGER.info("Got date and time [{}]", (dateTime = TestUtils.getDateTime()));
         return dateTime;
-    }
-
-
-    // =====================================
-    // Manage mobile NOTIFICATION CENTER
-    // =====================================
-    public void manageNotifications(boolean show) {
-        Dimension screenSize = getScreenSize();
-        int yTop = 3;
-        int xMid = screenSize.width / 2;
-        int yBottom = screenSize.height - yTop;
-
-        if (show) {
-            LOGGER.info("Showing notifications");
-            dragFromPointToPoint(xMid, yTop, xMid, yBottom, 100L);
-        } else {
-            LOGGER.info("Hiding notifications");
-            dragFromPointToPoint(xMid, yBottom, xMid, yTop, 100L);
-        }
-    }
-
-
-    // =====================================
-    // Press physical BUTTONS
-    // =====================================
-    public void pressAndroidButton(AndroidKey androidKey) {
-        LOGGER.info("Pressing Android key [{}]", androidKey);
-        ((AndroidDriver) driver).pressKey(new KeyEvent(androidKey));
     }
 
 

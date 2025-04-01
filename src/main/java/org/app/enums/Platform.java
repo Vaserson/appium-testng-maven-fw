@@ -2,5 +2,6 @@ package org.app.enums;
 
 public enum Platform {
     IOS,
-    ANDROID
+    ANDROID,
+    WEB
 }

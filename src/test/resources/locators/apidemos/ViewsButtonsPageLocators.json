@@ -10,10 +10,10 @@
       "xpath": "//android.widget.ToggleButton"
     },
     "API_DEMOS.VIEWS.BUTTONS.ON": {
-      "image": "images/btn_on.png"
+      "image": "images/apidemos/btn_on.png"
     },
     "API_DEMOS.VIEWS.BUTTONS.OFF": {
-      "image": "images/btn_off.png"
+      "image": "images/apidemos/btn_off.png"
     }
   }
 }

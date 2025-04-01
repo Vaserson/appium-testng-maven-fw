@@ -1,5 +1,7 @@
 package org.app.utils;
 
+import org.app.enums.Platform;
+import org.app.exceptions.UnsupportedPlatformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,12 +10,8 @@ import java.util.Objects;
 public final class PlatformUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlatformUtils.class);
 
-    // Enum for platform types
-    public enum PlatformType {
-        ANDROID, IOS, UNKNOWN
-    }
 
-    private static PlatformType platform = PlatformType.ANDROID; // Default platform
+    private static Platform platform = Platform.ANDROID; // Default platform
 
     private PlatformUtils() {}
 
@@ -21,21 +19,21 @@ public final class PlatformUtils {
      * Retrieves the current platform.
      * @return the current PlatformType
      */
-    public static PlatformType getPlatform() {
+    public static Platform getPlatform() {
         LOGGER.info("Current Platform is [{}]", platform.name());
         return platform;
     }
 
     /**
      * Sets the platform based on user input or property values.
-     * @param platformName platform name string (e.g., "android" or "ios")
+     * @param platformName platform name string (e.g., "android", "ios" or "web")
      */
-    public static void setPlatform(String platformName) {
-        if (Objects.nonNull(platformName) && !platformName.trim().isEmpty()) {
-            platform = parsePlatformType(platformName);
+    public static void setPlatform(Platform platformName) {
+        if (Objects.nonNull(platformName)) {
+            platform = platformName;
         } else {
-            String propertyPlatform = PropertyUtils.getProperty("platformName");
-            platform = propertyPlatform != null ? parsePlatformType(propertyPlatform) : PlatformType.ANDROID;
+            String propertyPlatform = PropertyUtils.getProperty("platform");
+            platform = propertyPlatform != null ? parsePlatformType(propertyPlatform) : Platform.ANDROID;
         }
         LOGGER.info("Platform set to [{}]", platform.name());
     }
@@ -45,7 +43,7 @@ public final class PlatformUtils {
      * @return true if Android, false otherwise
      */
     public static boolean isAndroid() {
-        return platform == PlatformType.ANDROID;
+        return platform == Platform.ANDROID;
     }
 
     /**
@@ -53,7 +51,15 @@ public final class PlatformUtils {
      * @return true if iOS, false otherwise
      */
     public static boolean isIOS() {
-        return platform == PlatformType.IOS;
+        return platform == Platform.IOS;
+    }
+
+    /**
+     * Checks if the current platform is WEB.
+     * @return true if WEB, false otherwise
+     */
+    public static boolean isWeb() {
+        return platform == Platform.WEB;
     }
 
     /**
@@ -62,12 +68,12 @@ public final class PlatformUtils {
      * @param platformName platform name as a string
      * @return PlatformType enum value
      */
-    private static PlatformType parsePlatformType(String platformName) {
+    private static Platform parsePlatformType(String platformName) {
         try {
-            return PlatformType.valueOf(platformName.trim().toUpperCase());
+            return Platform.valueOf(platformName.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
             LOGGER.warn("Invalid platform name [{}]. Defaulting to UNKNOWN.", platformName);
-            return PlatformType.UNKNOWN;
+            throw new UnsupportedPlatformException("Invalid platform name [" + platformName + "].", e);
         }
     }
 }

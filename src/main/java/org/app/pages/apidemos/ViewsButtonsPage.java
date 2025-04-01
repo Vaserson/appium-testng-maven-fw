@@ -1,9 +1,8 @@
 package org.app.pages.apidemos;
 
 import io.appium.java_client.AppiumDriver;
-import org.app.base.BasePage;
+import org.app.base.MobilePage;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +11,7 @@ import static io.appium.java_client.AppiumBy.xpath;
 /**
  * Represents the Views Buttons page and provides methods to interact with its elements.
  */
-public class ViewsButtonsPage extends BasePage {
+public class ViewsButtonsPage extends MobilePage {
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewsButtonsPage.class);
 
     private final By normalBtn = xpath("//android.widget.Button[@text='NORMAL']");

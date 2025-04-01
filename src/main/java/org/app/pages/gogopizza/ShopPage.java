@@ -1,13 +1,12 @@
 package org.app.pages.gogopizza;
 
 import io.appium.java_client.AppiumDriver;
-import org.app.base.BasePage;
-import org.openqa.selenium.WebDriver;
+import org.app.base.MobilePage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class ShopPage extends BasePage {
+public class ShopPage extends MobilePage {
     private static final Logger LOGGER = LoggerFactory.getLogger(ShopPage.class);
 
     public ShopPage(AppiumDriver driver) {

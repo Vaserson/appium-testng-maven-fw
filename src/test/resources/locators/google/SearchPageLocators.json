@@ -1,0 +1,10 @@
+{
+  "locators": {
+    "SEARCH_BOX": {
+      "name": "q"
+    },
+    "SEARCH_BUTTON": {
+      "name": "btnK"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <!-- Common Strings -->
+    <string name="app_name">Appium Test Framework</string>
+    
+    <!-- Web Strings -->
+    <string name="web_search_box">Search</string>
+    <string name="web_search_button">Google Search</string>
+
+</resources> 

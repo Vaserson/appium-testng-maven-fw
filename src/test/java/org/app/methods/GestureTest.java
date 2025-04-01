@@ -1,19 +1,19 @@
 package org.app.methods;
 
-import org.app.base.BasePage;
-import org.app.base.TouchAction;
+import org.app.base.MobilePage;
+import org.app.pages.apidemos.MenuPage;
 import org.testng.annotations.Test;
 
 //@Listeners(TestListener.class)
-public class GestureTest extends BaseTest {
+public class GestureTest extends MethodsBaseTest {
 
     @Test
     public void swipeTest() {
+        new MenuPage(driver)
+                .openViewsMenu();
 
-        TouchAction touchAction = new TouchAction(driver);
-
-        BasePage basePage = new BasePage(driver);
-        basePage.waitInSeconds(4);
+        MobilePage basePage = new MobilePage(driver);
+        basePage.waitInSeconds(2);
         basePage.scroll("down", "scroll", 1);
         basePage.waitInSeconds(2);
         basePage.scroll("up", "scroll", 1);

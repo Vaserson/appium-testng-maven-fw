@@ -1,0 +1,7 @@
+{
+  "locators": {
+      "NEWS_BLOCK": {
+      "css": ".news-block"
+    }
+  }
+}

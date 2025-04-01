@@ -14,13 +14,13 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.*;
+import java.io.IOException;
 
 public final class PropertyUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(PropertyUtils.class);
 
     private static final Properties properties = new Properties();
     private static final Map<String, String> CONFIGMAP;
-    private static final Map<String, String> CACHE = new HashMap<>();
 
     private PropertyUtils() {}
 
@@ -29,22 +29,43 @@ public final class PropertyUtils {
     }
 
     private static Map<String, String> loadProperties() {
-        String propertyFilePath = getConfigFilePath();
-        Map<String, String> tempConfigMap = new HashMap<>();
-        try (FileInputStream file = new FileInputStream(propertyFilePath)) {
-            properties.load(file);
-            for (String key : properties.stringPropertyNames()) {
-                tempConfigMap.put(key, properties.getProperty(key));
-            }
-        } catch (Exception e) {
-            LOGGER.error("Failed to load properties file from path: [{}] with message [{}]", propertyFilePath, e.getMessage());
-            throw new PropertyFileUsageException("Unable to load configuration properties", e);
+        return loadProperties(getConfigFilePath());
+    }
+
+    public static Map<String, String> loadProperties(String propertyFilePath) {
+        Map<String, String> configMap = new HashMap<>();
+
+        if (propertyFilePath == null) {
+            LOGGER.warn("Skipping property loading as no file is provided.");
+            return configMap;
         }
-        return Collections.unmodifiableMap(tempConfigMap);
+
+        try (InputStream inputStream = PropertyUtils.class.getClassLoader().getResourceAsStream(propertyFilePath)) {
+            if (inputStream == null) {
+                LOGGER.error("Property file not found: {}", propertyFilePath);
+                throw new PropertyFileUsageException("Property file not found: " + propertyFilePath);
+            }
+
+            properties.load(inputStream);
+            for (String key : properties.stringPropertyNames()) {
+                configMap.put(key, properties.getProperty(key));
+            }
+            LOGGER.info("Properties loaded successfully from: {}", propertyFilePath);
+        } catch (IOException e) {
+            LOGGER.error("Error loading properties from file: {}", e.getMessage());
+            throw new PropertyFileUsageException("Failed to load properties from file: " + propertyFilePath, e);
+        }
+        return configMap;
     }
 
     private static String getConfigFilePath() {
-        return System.getProperty("config.file", "src/test/resources/properties/apiDemos.properties");
+        String configFile = System.getProperty("config.file");
+        if (configFile == null || configFile.isEmpty()) {
+            LOGGER.warn("No config file specified, returning null");
+            return null;
+        }
+        LOGGER.info("Using config file: {}", configFile);
+        return configFile;
     }
 
     /**
@@ -98,25 +119,39 @@ public final class PropertyUtils {
      * @throws PropertyFileUsageException if the property is not found or empty.
      */
     public static String getProperty(String key) {
-        if (key == null || key.isEmpty()) {
-            throw new PropertyFileUsageException("Property key cannot be null or empty.");
-        }
-
-        return CACHE.computeIfAbsent(key, k -> {
-            LOGGER.debug("Fetching property for key '{}'", k);
+        return CONFIGMAP.computeIfAbsent(key, k -> {
             String value = System.getProperty(k);
-            if (Objects.nonNull(value)) {
-                LOGGER.debug("Key '{}' found in system properties with value '{}'", k, value);
-            } else {
+            if (value == null) {
                 LOGGER.warn("Key '{}' not found in system properties, checking config file", k);
-                value = CONFIGMAP.get(k);
-            }
-            if (Objects.nonNull(value)) {
-                LOGGER.debug("Key '{}' found in config properties with value '{}'", k, value);
-            } else {
-                throw new PropertyFileUsageException("Property '" + k + "' not found or empty. Check configuration.");
+                value = properties.getProperty(k);
+                if (value == null || value.isEmpty()) {
+                    LOGGER.error("Property '{}' not found or empty. Check configuration.", k);
+                    throw new PropertyFileUsageException("Property '" + k + "' not found or empty. Check configuration.");
+                }
             }
             return value;
         });
+    }
+
+    public static Map<String, String> loadStrings() {
+        String stringsXmlPath = getProperty("stringsXml");
+        if (stringsXmlPath == null || stringsXmlPath.isEmpty()) {
+            LOGGER.error("Strings XML path not found in properties");
+            return new HashMap<>();
+        }
+
+        try (InputStream inputStream = PropertyUtils.class.getClassLoader().getResourceAsStream(stringsXmlPath)) {
+            if (inputStream == null) {
+                LOGGER.error("Strings XML file not found: {}", stringsXmlPath);
+                return new HashMap<>();
+            }
+
+            Map<String, String> strings = new HashMap<>();
+            // Add your XML parsing logic here
+            return strings;
+        } catch (IOException e) {
+            LOGGER.error("Error loading strings from XML: {}", e.getMessage());
+            return new HashMap<>();
+        }
     }
 }
